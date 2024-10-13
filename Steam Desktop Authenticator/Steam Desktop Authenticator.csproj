@@ -22,6 +22,10 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <Version>1.0.14</Version>
+    <AssemblyVersion>1.0.14</AssemblyVersion>
+    <FileVersion>1.0.14</FileVersion>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
   </PropertyGroup>
   <PropertyGroup>
     <AssemblyOriginatorKeyFile>

@@ -694,14 +694,18 @@ namespace Steam_Desktop_Authenticator
             try
             {
                 dynamic resultObject = JsonConvert.DeserializeObject(e.Result);
-                newVersion = new Version(resultObject.tag_name.Value);
-                currentVersion = new Version(Application.ProductVersion);
-                updateUrl = resultObject.assets.First.browser_download_url.Value;
+                if (resultObject != null)
+                {
+                    newVersion = new Version(resultObject.tag_name.Value);
+                    currentVersion = new Version(Application.ProductVersion);
+                    updateUrl = resultObject.assets.First.browser_download_url.Value;
+                }
+
                 compareVersions();
             }
             catch (Exception)
             {
-                MessageBox.Show("Failed to check for updates.");
+                MessageBox.Show(Strings.FailedCheckUpdates);
             }
         }
 

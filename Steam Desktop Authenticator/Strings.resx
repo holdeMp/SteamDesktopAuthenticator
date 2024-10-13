@@ -72,4 +72,10 @@
     <data name="AnotherInstance" xml:space="preserve">
         <value>Another instance of the app is already running.</value>
     </data>
+    <data name="ReduceSecurity" xml:space="preserve">
+        <value>Warning: enabling this will severely reduce the security of your items! Use of this option is at your own risk. Would you like to continue?</value>
+    </data>
+    <data name="FailedCheckUpdates" xml:space="preserve">
+        <value>Failed to check for updates.</value>
+    </data>
 </root>

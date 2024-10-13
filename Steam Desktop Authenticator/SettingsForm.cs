@@ -5,8 +5,8 @@ namespace Steam_Desktop_Authenticator
 {
     public partial class SettingsForm : Form
     {
-        Manifest manifest;
-        bool fullyLoaded = false;
+        private readonly Manifest manifest;
+        private readonly bool fullyLoaded;
 
         public SettingsForm()
         {
@@ -35,7 +35,7 @@ namespace Steam_Desktop_Authenticator
         {
             if (!fullyLoaded) return;
 
-            var result = MessageBox.Show("Warning: enabling this will severely reduce the security of your items! Use of this option is at your own risk. Would you like to continue?", "Warning!", MessageBoxButtons.YesNo);
+            var result = MessageBox.Show(Strings.ReduceSecurity, "Warning!", MessageBoxButtons.YesNo);
             if (result == DialogResult.No)
             {
                 affectedBox.Checked = false;

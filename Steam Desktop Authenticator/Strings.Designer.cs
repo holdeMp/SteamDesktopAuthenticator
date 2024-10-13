@@ -123,6 +123,15 @@ namespace Steam_Desktop_Authenticator {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Failed to check for updates..
+        /// </summary>
+        internal static string FailedCheckUpdates {
+            get {
+                return ResourceManager.GetString("FailedCheckUpdates", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to That passkey is invalid. Please enter the same passkey you used for your other accounts..
         /// </summary>
         internal static string InvalidPasskey {
@@ -155,6 +164,15 @@ namespace Steam_Desktop_Authenticator {
         internal static string MobileAuthenticatorNotLinked {
             get {
                 return ResourceManager.GetString("MobileAuthenticatorNotLinked", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Warning: enabling this will severely reduce the security of your items! Use of this option is at your own risk. Would you like to continue?.
+        /// </summary>
+        internal static string ReduceSecurity {
+            get {
+                return ResourceManager.GetString("ReduceSecurity", resourceCulture);
             }
         }
         
