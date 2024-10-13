@@ -14,22 +14,22 @@ namespace Steam_Desktop_Authenticator
 
         public PhoneInputForm(SteamGuardAccount account)
         {
-            this.Account = account;
+            Account = account;
             InitializeComponent();
         }
 
         private void btnSubmit_Click(object sender, EventArgs e)
         {
-            this.PhoneNumber = txtPhoneNumber.Text;
-            this.CountryCode = txtCountryCode.Text;
+            PhoneNumber = txtPhoneNumber.Text;
+            CountryCode = txtCountryCode.Text;
 
-            if (this.PhoneNumber[0] != '+')
+            if (PhoneNumber[0] != '+')
             {
                 MessageBox.Show("Phone number must start with + and country code.", "Phone Number", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
-            this.Close();
+            Close();
         }
 
         private void txtPhoneNumber_KeyPress(object sender, KeyPressEventArgs e)
@@ -68,8 +68,8 @@ namespace Steam_Desktop_Authenticator
 
         private void btnCancel_Click(object sender, EventArgs e)
         {
-            this.Canceled = true;
-            this.Close();
+            Canceled = true;
+            Close();
         }
     }
 }

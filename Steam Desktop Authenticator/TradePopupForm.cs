@@ -37,7 +37,7 @@ namespace Steam_Desktop_Authenticator
 
         private void TradePopupForm_Load(object sender, EventArgs e)
         {
-            this.Location = (Point)Size.Subtract(Screen.GetWorkingArea(this).Size, this.Size);
+            Location = (Point)Size.Subtract(Screen.GetWorkingArea(this).Size, Size);
         }
 
         private void btnAccept_Click(object sender, EventArgs e)
@@ -89,7 +89,7 @@ namespace Steam_Desktop_Authenticator
 
             if (confirms.Count == 0)
             {
-                this.Hide();
+                Hide();
             }
             else
             {
@@ -101,7 +101,7 @@ namespace Steam_Desktop_Authenticator
         public void Popup()
         {
             Reset();
-            this.Show();
+            Show();
         }
     }
 }

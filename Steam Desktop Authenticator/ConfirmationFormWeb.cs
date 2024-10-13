@@ -15,17 +15,17 @@ namespace Steam_Desktop_Authenticator
         {
             InitializeComponent();
             this.steamAccount = steamAccount;
-            this.Text = String.Format("Trade Confirmations - {0}", steamAccount.AccountName);
+            Text = string.Format("Trade Confirmations - {0}", steamAccount.AccountName);
         }
         private async Task LoadData()
         {
-            this.splitContainer1.Panel2.Controls.Clear();
+            splitContainer1.Panel2.Controls.Clear();
 
             // Check for a valid refresh token first
             if (steamAccount.Session.IsRefreshTokenExpired())
             {
                 MessageBox.Show("Your session has expired. Use the login again button under the selected account menu.", "Trade Confirmations", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                this.Close();
+                Close();
                 return;
             }
 
@@ -39,7 +39,7 @@ namespace Steam_Desktop_Authenticator
                 catch (Exception ex)
                 {
                     MessageBox.Show(ex.Message, "Steam Login Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    this.Close();
+                    Close();
                     return;
                 }
             }
@@ -51,7 +51,7 @@ namespace Steam_Desktop_Authenticator
                 if (confirmations == null || confirmations.Length == 0)
                 {
                     Label errorLabel = new Label() { Text = "Nothing to confirm/cancel", AutoSize = true, ForeColor = Color.Black, Location = new Point(150, 20) };
-                    this.splitContainer1.Panel2.Controls.Add(errorLabel);
+                    splitContainer1.Panel2.Controls.Add(errorLabel);
                 }
 
                 foreach (var confirmation in confirmations)
@@ -118,13 +118,13 @@ namespace Steam_Desktop_Authenticator
                     };
                     panel.Controls.Add(summaryLabel);
 
-                    this.splitContainer1.Panel2.Controls.Add(panel);
+                    splitContainer1.Panel2.Controls.Add(panel);
                 }
             }
             catch (Exception ex)
             {
                 Label errorLabel = new Label() { Text = "Something went wrong:\n" + ex.Message, AutoSize = true, ForeColor = Color.Red, Location = new Point(20, 20) };
-                this.splitContainer1.Panel2.Controls.Add(errorLabel);
+                splitContainer1.Panel2.Controls.Add(errorLabel);
             }
         }
 
@@ -134,39 +134,39 @@ namespace Steam_Desktop_Authenticator
             var confirmation = button.Confirmation;
             bool result = await steamAccount.AcceptConfirmation(confirmation);
 
-            await this.LoadData();
+            await LoadData();
         }
 
         private async void btnCancel_Click(object sender, EventArgs e)
         {
             var button = (ConfirmationButton)sender;
             var confirmation = button.Confirmation;
-            bool result = await steamAccount.DenyConfirmation(confirmation);
+            _ = await steamAccount.DenyConfirmation(confirmation);
 
-            await this.LoadData();
+            await LoadData();
         }
 
 
         private async void btnRefresh_Click(object sender, EventArgs e)
         {
-            this.btnRefresh.Enabled = false;
-            this.btnRefresh.Text = "Refreshing...";
+            btnRefresh.Enabled = false;
+            btnRefresh.Text = "Refreshing...";
 
-            await this.LoadData();
+            await LoadData();
 
-            this.btnRefresh.Enabled = true;
-            this.btnRefresh.Text = "Refresh";
+            btnRefresh.Enabled = true;
+            btnRefresh.Text = "Refresh";
         }
 
         private async void ConfirmationFormWeb_Shown(object sender, EventArgs e)
         {
-            this.btnRefresh.Enabled = false;
-            this.btnRefresh.Text = "Refreshing...";
+            btnRefresh.Enabled = false;
+            btnRefresh.Text = "Refreshing...";
 
-            await this.LoadData();
+            await LoadData();
 
-            this.btnRefresh.Enabled = true;
-            this.btnRefresh.Text = "Refresh";
+            btnRefresh.Enabled = true;
+            btnRefresh.Text = "Refresh";
         }
     }
 }

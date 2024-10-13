@@ -34,13 +34,13 @@ namespace Steam_Desktop_Authenticator
             if (lbItems.SelectedIndex != -1)
             {
                 SelectedIndex = lbItems.SelectedIndex;
-                this.Close();
+                Close();
             }
         }
 
         private void btnCancel_Click(object sender, EventArgs e)
         {
-            this.Close();
+            Close();
         }
     }
 }

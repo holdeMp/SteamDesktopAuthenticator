@@ -1,11 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace Steam_Desktop_Authenticator
@@ -19,28 +12,28 @@ namespace Steam_Desktop_Authenticator
         {
             get
             {
-                return this.txtBox.Text;
+                return txtBox.Text;
             }
         }
 
         public CaptchaForm(string GID)
         {
-            this.CaptchaGID = GID;
-            this.CaptchaURL = "https://steamcommunity.com/public/captcha.php?gid=" + GID;
+            CaptchaGID = GID;
+            CaptchaURL = "https://steamcommunity.com/public/captcha.php?gid=" + GID;
             InitializeComponent();
-            this.pictureBoxCaptcha.Load(CaptchaURL);
+            pictureBoxCaptcha.Load(CaptchaURL);
         }
 
         private void btnAccept_Click(object sender, EventArgs e)
         {
-            this.Canceled = false;
-            this.Close();
+            Canceled = false;
+            Close();
         }
 
         private void btnCancel_Click(object sender, EventArgs e)
         {
-            this.Canceled = true;
-            this.Close();
+            Canceled = true;
+            Close();
         }
     }
 }

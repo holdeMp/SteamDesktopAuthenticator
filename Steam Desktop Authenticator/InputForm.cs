@@ -18,43 +18,43 @@ namespace Steam_Desktop_Authenticator
         public InputForm(string label, bool password = false)
         {
             InitializeComponent();
-            this.labelText.Text = label;
+            labelText.Text = label;
 
             if (password)
             {
-                this.txtBox.PasswordChar = '*';
+                txtBox.PasswordChar = '*';
             }
         }
 
         private void btnAccept_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrEmpty(this.txtBox.Text))
+            if (string.IsNullOrEmpty(txtBox.Text))
             {
-                this.Canceled = true;
-                this.userClosed = false;
-                this.Close();
+                Canceled = true;
+                userClosed = false;
+                Close();
             }
             else
             {
-                this.Canceled = false;
-                this.userClosed = false;
-                this.Close();
+                Canceled = false;
+                userClosed = false;
+                Close();
             }
         }
 
         private void btnCancel_Click(object sender, EventArgs e)
         {
-            this.Canceled = true;
-            this.userClosed = false;
-            this.Close();
+            Canceled = true;
+            userClosed = false;
+            Close();
         }
 
         private void InputForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if (this.userClosed)
+            if (userClosed)
             {
                 // Set Canceled = true when the user hits the X button.
-                this.Canceled = true;
+                Canceled = true;
             }
         }
     }

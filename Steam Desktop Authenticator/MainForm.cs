@@ -47,20 +47,20 @@ namespace Steam_Desktop_Authenticator
 
         private void MainForm_Shown(object sender, EventArgs e)
         {
-            this.labelVersion.Text = String.Format("v{0}", Application.ProductVersion);
+            labelVersion.Text = string.Format("v{0}", Application.ProductVersion);
             try
             {
-                this.manifest = Manifest.GetManifest();
+                manifest = Manifest.GetManifest();
             }
             catch (ManifestParseException)
             {
                 MessageBox.Show("Unable to read your settings. Try restating SDA.", "Steam Desktop Authenticator", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                this.Close();
+                Close();
             }
 
             // Make sure we don't show that welcome dialog again
-            this.manifest.FirstRun = false;
-            this.manifest.Save();
+            manifest.FirstRun = false;
+            manifest.Save();
 
             // Tick first time manually to sync time
             timerSteamGuard_Tick(new object(), EventArgs.Empty);
@@ -92,20 +92,20 @@ namespace Steam_Desktop_Authenticator
 
             if (startSilent)
             {
-                this.WindowState = FormWindowState.Minimized;
+                WindowState = FormWindowState.Minimized;
             }
         }
 
         private void MainForm_Load(object sender, EventArgs e)
         {
-            trayIcon.Icon = this.Icon;
+            trayIcon.Icon = Icon;
         }
 
         private void MainForm_Resize(object sender, EventArgs e)
         {
-            if (this.WindowState == FormWindowState.Minimized)
+            if (WindowState == FormWindowState.Minimized)
             {
-                this.Hide();
+                Hide();
             }
         }
 
@@ -121,7 +121,7 @@ namespace Steam_Desktop_Authenticator
         {
             var loginForm = new LoginForm();
             loginForm.ShowDialog();
-            this.loadAccountsList();
+            loadAccountsList();
         }
 
         private void btnTradeConfirmations_Click(object sender, EventArgs e)
@@ -188,13 +188,13 @@ namespace Steam_Desktop_Authenticator
                 else
                 {
                     MessageBox.Show("Passkey successfully " + action + "d.");
-                    this.loadAccountsList();
+                    loadAccountsList();
                 }
             }
             else
             {
                 passKey = manifest.PromptSetupPassKey();
-                this.loadAccountsList();
+                loadAccountsList();
             }
         }
 
@@ -243,7 +243,7 @@ namespace Steam_Desktop_Authenticator
 
         private void menuLoginAgain_Click(object sender, EventArgs e)
         {
-            this.PromptRefreshLogin(currentAccount);
+            PromptRefreshLogin(currentAccount);
         }
 
         private void menuImportAccount_Click(object sender, EventArgs e)
@@ -322,8 +322,8 @@ namespace Steam_Desktop_Authenticator
                 if (success)
                 {
                     MessageBox.Show(String.Format("Steam Guard {0}. maFile will be deleted after hitting okay. If you need to make a backup, now's the time.", (scheme == 2 ? "removed completely" : "switched to emails")));
-                    this.manifest.RemoveAccount(currentAccount);
-                    this.loadAccountsList();
+                    manifest.RemoveAccount(currentAccount);
+                    loadAccountsList();
                 }
                 else
                 {
@@ -344,8 +344,8 @@ namespace Steam_Desktop_Authenticator
 
         private void trayRestore_Click(object sender, EventArgs e)
         {
-            this.Show();
-            this.WindowState = FormWindowState.Normal;
+            Show();
+            WindowState = FormWindowState.Normal;
         }
 
         private void trayQuit_Click(object sender, EventArgs e)

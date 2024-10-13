@@ -50,7 +50,7 @@ namespace Steam_Desktop_Authenticator
             manifest.AutoConfirmMarketTransactions = chkConfirmMarket.Checked;
             manifest.AutoConfirmTrades = chkConfirmTrades.Checked;
             manifest.Save();
-            this.Close();
+            Close();
         }
 
         private void chkPeriodicChecking_CheckedChanged(object sender, EventArgs e)

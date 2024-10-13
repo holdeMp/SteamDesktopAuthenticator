@@ -52,7 +52,7 @@ namespace Steam_Desktop_Authenticator
             }
 
             // Find config dir and manifest file
-            string maDir = Manifest.GetExecutableDir() + "/maFiles/";
+            string maDir = GetExecutableDir() + "/maFiles/";
             string manifestFile = maDir + "manifest.json";
 
             // If there's no config dir, create it
@@ -104,7 +104,7 @@ namespace Steam_Desktop_Authenticator
             // Take a pre-manifest version and generate a manifest for it.
             if (scanDir)
             {
-                string maDir = Manifest.GetExecutableDir() + "/maFiles/";
+                string maDir = GetExecutableDir() + "/maFiles/";
                 if (Directory.Exists(maDir))
                 {
                     DirectoryInfo dir = new DirectoryInfo(maDir);
@@ -152,7 +152,7 @@ namespace Steam_Desktop_Authenticator
 
         public string PromptForPassKey()
         {
-            if (!this.Encrypted)
+            if (!Encrypted)
             {
                 throw new ManifestNotEncryptedException();
             }
@@ -166,7 +166,7 @@ namespace Steam_Desktop_Authenticator
                 if (!passKeyForm.Canceled)
                 {
                     passKey = passKeyForm.txtBox.Text;
-                    passKeyValid = this.VerifyPasskey(passKey);
+                    passKeyValid = VerifyPasskey(passKey);
                     if (!passKeyValid)
                     {
                         MessageBox.Show("That passkey is invalid.");
@@ -207,7 +207,7 @@ namespace Steam_Desktop_Authenticator
                 return null;
             }
 
-            if (!this.ChangeEncryptionKey(null, newPassKey))
+            if (!ChangeEncryptionKey(null, newPassKey))
             {
                 MessageBox.Show("Unable to set passkey.");
                 return null;
@@ -220,23 +220,23 @@ namespace Steam_Desktop_Authenticator
             return newPassKey;
         }
 
-        public SteamAuth.SteamGuardAccount[] GetAllAccounts(string passKey = null, int limit = -1)
+        public SteamGuardAccount[] GetAllAccounts(string passKey = null, int limit = -1)
         {
-            if (passKey == null && this.Encrypted) return new SteamGuardAccount[0];
-            string maDir = Manifest.GetExecutableDir() + "/maFiles/";
+            if (passKey == null && Encrypted) return new SteamGuardAccount[0];
+            string maDir = GetExecutableDir() + "/maFiles/";
 
-            List<SteamAuth.SteamGuardAccount> accounts = new List<SteamAuth.SteamGuardAccount>();
-            foreach (var entry in this.Entries)
+            List<SteamGuardAccount> accounts = new List<SteamGuardAccount>();
+            foreach (var entry in Entries)
             {
                 string fileText = File.ReadAllText(maDir + entry.Filename);
-                if (this.Encrypted)
+                if (Encrypted)
                 {
                     string decryptedText = FileEncryptor.DecryptData(passKey, entry.Salt, entry.IV, fileText);
                     if (decryptedText == null) return new SteamGuardAccount[0];
                     fileText = decryptedText;
                 }
 
-                var account = JsonConvert.DeserializeObject<SteamAuth.SteamGuardAccount>(fileText);
+                var account = JsonConvert.DeserializeObject<SteamGuardAccount>(fileText);
                 if (account == null) continue;
                 accounts.Add(account);
 
@@ -249,24 +249,24 @@ namespace Steam_Desktop_Authenticator
 
         public bool ChangeEncryptionKey(string oldKey, string newKey)
         {
-            if (this.Encrypted)
+            if (Encrypted)
             {
-                if (!this.VerifyPasskey(oldKey))
+                if (!VerifyPasskey(oldKey))
                 {
                     return false;
                 }
             }
             bool toEncrypt = newKey != null;
 
-            string maDir = Manifest.GetExecutableDir() + "/maFiles/";
-            for (int i = 0; i < this.Entries.Count; i++)
+            string maDir = GetExecutableDir() + "/maFiles/";
+            for (int i = 0; i < Entries.Count; i++)
             {
-                ManifestEntry entry = this.Entries[i];
+                ManifestEntry entry = Entries[i];
                 string filename = maDir + entry.Filename;
                 if (!File.Exists(filename)) continue;
 
                 string fileContents = File.ReadAllText(filename);
-                if (this.Encrypted)
+                if (Encrypted)
                 {
                     fileContents = FileEncryptor.DecryptData(oldKey, entry.Salt, entry.IV, fileContents);
                 }
@@ -287,35 +287,35 @@ namespace Steam_Desktop_Authenticator
                 entry.Salt = newSalt;
             }
 
-            this.Encrypted = toEncrypt;
+            Encrypted = toEncrypt;
 
-            this.Save();
+            Save();
             return true;
         }
 
         public bool VerifyPasskey(string passkey)
         {
-            if (!this.Encrypted || this.Entries.Count == 0) return true;
+            if (!Encrypted || Entries.Count == 0) return true;
 
-            var accounts = this.GetAllAccounts(passkey, 1);
+            var accounts = GetAllAccounts(passkey, 1);
             return accounts != null && accounts.Length == 1;
         }
 
         public bool RemoveAccount(SteamGuardAccount account, bool deleteMaFile = true)
         {
-            ManifestEntry entry = (from e in this.Entries where e.SteamID == account.Session.SteamID select e).FirstOrDefault();
+            ManifestEntry entry = (from e in Entries where e.SteamID == account.Session.SteamID select e).FirstOrDefault();
             if (entry == null) return true; // If something never existed, did you do what they asked?
 
-            string maDir = Manifest.GetExecutableDir() + "/maFiles/";
+            string maDir = GetExecutableDir() + "/maFiles/";
             string filename = maDir + entry.Filename;
-            this.Entries.Remove(entry);
+            Entries.Remove(entry);
 
-            if (this.Entries.Count == 0)
+            if (Entries.Count == 0)
             {
-                this.Encrypted = false;
+                Encrypted = false;
             }
 
-            if (this.Save() && deleteMaFile)
+            if (Save() && deleteMaFile)
             {
                 try
                 {
@@ -334,7 +334,7 @@ namespace Steam_Desktop_Authenticator
         public bool SaveAccount(SteamGuardAccount account, bool encrypt, string passKey = null)
         {
             if (encrypt && String.IsNullOrEmpty(passKey)) return false;
-            if (!encrypt && this.Encrypted) return false;
+            if (!encrypt && Encrypted) return false;
 
             string salt = null;
             string iV = null;
@@ -349,7 +349,7 @@ namespace Steam_Desktop_Authenticator
                 jsonAccount = encrypted;
             }
 
-            string maDir = Manifest.GetExecutableDir() + "/maFiles/";
+            string maDir = GetExecutableDir() + "/maFiles/";
             string filename = account.Session.SteamID.ToString() + ".maFile";
 
             ManifestEntry newEntry = new ManifestEntry()
@@ -361,11 +361,11 @@ namespace Steam_Desktop_Authenticator
             };
 
             bool foundExistingEntry = false;
-            for (int i = 0; i < this.Entries.Count; i++)
+            for (int i = 0; i < Entries.Count; i++)
             {
-                if (this.Entries[i].SteamID == account.Session.SteamID)
+                if (Entries[i].SteamID == account.Session.SteamID)
                 {
-                    this.Entries[i] = newEntry;
+                    Entries[i] = newEntry;
                     foundExistingEntry = true;
                     break;
                 }
@@ -373,15 +373,15 @@ namespace Steam_Desktop_Authenticator
 
             if (!foundExistingEntry)
             {
-                this.Entries.Add(newEntry);
+                Entries.Add(newEntry);
             }
 
-            bool wasEncrypted = this.Encrypted;
-            this.Encrypted = encrypt || this.Encrypted;
+            bool wasEncrypted = Encrypted;
+            Encrypted = encrypt || Encrypted;
 
-            if (!this.Save())
+            if (!Save())
             {
-                this.Encrypted = wasEncrypted;
+                Encrypted = wasEncrypted;
                 return false;
             }
 
@@ -398,7 +398,7 @@ namespace Steam_Desktop_Authenticator
 
         public bool Save()
         {
-            string maDir = Manifest.GetExecutableDir() + "/maFiles/";
+            string maDir = GetExecutableDir() + "/maFiles/";
             string filename = maDir + "manifest.json";
             if (!Directory.Exists(maDir))
             {
@@ -427,9 +427,9 @@ namespace Steam_Desktop_Authenticator
         private void RecomputeExistingEntries()
         {
             List<ManifestEntry> newEntries = new List<ManifestEntry>();
-            string maDir = Manifest.GetExecutableDir() + "/maFiles/";
+            string maDir = GetExecutableDir() + "/maFiles/";
 
-            foreach (var entry in this.Entries)
+            foreach (var entry in Entries)
             {
                 string filename = maDir + entry.Filename;
                 if (File.Exists(filename))
@@ -438,11 +438,11 @@ namespace Steam_Desktop_Authenticator
                 }
             }
 
-            this.Entries = newEntries;
+            Entries = newEntries;
 
-            if (this.Entries.Count == 0)
+            if (Entries.Count == 0)
             {
-                this.Encrypted = false;
+                Encrypted = false;
             }
         }
 

@@ -21,14 +21,14 @@ namespace Steam_Desktop_Authenticator
         public ImportAccountForm()
         {
             InitializeComponent();
-            this.mManifest = Manifest.GetManifest();
+            mManifest = Manifest.GetManifest();
         }
 
         private void btnImport_Click(object sender, EventArgs e)
         {
             // check if data already added is encripted
             #region check if data already added is encripted
-            string ContiuneImport = "0";
+            string ContinueImport = "0";
 
             string ManifestFile = "maFiles/manifest.json";
             if (File.Exists(ManifestFile))
@@ -39,16 +39,16 @@ namespace Steam_Desktop_Authenticator
                 if (AppManifestData_encrypted == true)
                 {
                     MessageBox.Show("You can't import an .maFile because the existing account in the app is encrypted.\nDecrypt it and try again.");
-                    this.Close();
+                    Close();
                 }
                 else if (AppManifestData_encrypted == false)
                 {
-                    ContiuneImport = "1";
+                    ContinueImport = "1";
                 }
                 else
                 {
                     MessageBox.Show("invalid value for variable 'encrypted' inside manifest.json");
-                    this.Close();
+                    Close();
                 }
             }
             else
@@ -59,9 +59,9 @@ namespace Steam_Desktop_Authenticator
 
             // Continue
             #region Continue
-            if (ContiuneImport == "1")
+            if (ContinueImport == "1")
             {
-                this.Close();
+                Close();
 
                 // read EncriptionKey from imput box
                 string ImportUsingEncriptionKey = txtBox.Text;
@@ -81,10 +81,10 @@ namespace Steam_Desktop_Authenticator
                 if (userClickedOK == DialogResult.OK)
                 {
                     // Open the selected file to read.
-                    System.IO.Stream fileStream = openFileDialog1.OpenFile();
+                    Stream fileStream = openFileDialog1.OpenFile();
                     string fileContents = null;
 
-                    using (System.IO.StreamReader reader = new System.IO.StreamReader(fileStream))
+                    using (StreamReader reader = new StreamReader(fileStream))
                     {
                         fileContents = reader.ReadToEnd();
                     }
@@ -265,7 +265,7 @@ namespace Steam_Desktop_Authenticator
 
         private void btnCancel_Click(object sender, EventArgs e)
         {
-            this.Close();
+            Close();
         }
 
         private void Import_maFile_Form_FormClosing(object sender, FormClosingEventArgs e)
