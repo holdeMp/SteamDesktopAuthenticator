@@ -1,0 +1,50 @@
+﻿@page "/"
+@using SteamWebAuthenticator
+@using SteamWebAuthenticator.Interfaces
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@inject IAccountService AccountService
+@inject IWebHostEnvironment _hostingEnvironment
+@if (string.IsNullOrEmpty(AccountService.SelectedAccountName))
+{
+    <div class="markdown-content">
+        @((MarkupString)readMeContent)
+    </div>
+}
+<FirstVisitDialog IsVisible="@showFirstVisitDialog" 
+                  Title="Welcome to Steam Web Authenticator" 
+                  Message="Select an item to get started:" OnClose="HandleDialogClose" />
+@code {
+    private string readMeContent = string.Empty;
+    private bool showFirstVisitDialog = true;
+    [Inject]
+    private HttpClient? Http { get; set; }
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await LoadManifestAsync();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Http != null)
+        {
+            readMeContent = await File.ReadAllTextAsync(Path.Combine(_hostingEnvironment.WebRootPath, "README.md"));
+            readMeContent = Markdig.Markdown.ToHtml(readMeContent);
+        }
+        var confs = await AccountService.FetchConfirmationsAsync();
+    }
+
+    private async Task LoadManifestAsync()
+    {
+        var manifest = await LocalStorage.GetItemAsync<string>(Constants.Manifest);
+        if (string.IsNullOrEmpty(manifest))
+        {
+            showFirstVisitDialog = true;
+        }
+    }
+    
+    private void HandleDialogClose(bool result)
+    {
+        showFirstVisitDialog = false;
+    }
+}

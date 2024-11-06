@@ -1,0 +1,51 @@
+﻿@using SteamAuth
+@using SteamWebAuthenticator.Interfaces
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">Steam Authenticator</a>
+        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <select @bind="AccountService.SelectedAccountName" class="form-select" style="margin-left: 20px;">
+            <option value="">Select an account</option>
+            @foreach (var account in accounts)
+            {
+                <option value="@account.AccountName">@account.AccountName</option>
+            }
+        </select>
+    </div>
+</div>
+
+<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
+    <nav class="flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="weather">
+                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Confirmations
+            </NavLink>
+        </div>
+    </nav>
+</div>
+@inject IAccountService AccountService;
+@code {
+    private bool collapseNavMenu = true;
+
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+    private List<SteamGuardAccount> accounts = [];
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await AccountService.InitializeAsync();
+        AccountService.OnChange += StateHasChanged;
+        accounts = AccountService.GetAccountsList();
+        if (accounts.Count > 0)
+        {
+            AccountService.SelectedAccountName = accounts[0].AccountName;
+        }
+    }
+
+    
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+}
