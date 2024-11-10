@@ -129,3 +129,25 @@ code {
     border: 1px solid #888;
     width: 80%;
 }
+
+.alert-overlay {
+    position: absolute;
+    top: 20%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 9999; 
+    background-color: white;
+    padding: 1rem;
+    border: 1px solid #ddd;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    cursor: move;
+}
+
+#alertHeader {
+    padding: 10px;
+    cursor: move;
+    z-index: 10;
+    background-color: #fff;
+    color: #fff;
+}
+

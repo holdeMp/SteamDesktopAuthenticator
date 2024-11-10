@@ -2,12 +2,11 @@
 @rendermode InteractiveServer
 @if (IsVisible)
 {
-    <div class="modal-overlay">
-        <div class="modal-content">
-            <h3>@Title</h3>
-            <p>@Message</p>
-            <button @onclick="CloseAlert" class="btn btn-primary">OK</button>
-        </div>
+    <div class="alert-overlay" id="alert">
+        <div id="alertHeader"></div>
+        <h3>@Title</h3>
+        <p>@Message</p>
+        <button @onclick="CloseAlert" class="btn btn-primary">OK</button>
     </div>
 }
 
@@ -22,13 +21,17 @@
 
     private bool IsVisible { get; set; } = false;
 
-    public void Show(string title, string message)
+    public async Task ShowAsync(string title, string message)
     {
         Title = title;
         Message = message;
         IsVisible = true;
         StateHasChanged();
+        if (Js != null) await Js.InvokeVoidAsync("makeDraggable", "alert");
     }
+
+    [Inject] 
+    private IJSRuntime? Js { get; set; }
 
     private async Task CloseAlert()
     {

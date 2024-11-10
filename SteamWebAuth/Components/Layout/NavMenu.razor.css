@@ -81,3 +81,12 @@
         overflow-y: auto;
     }
 }
+
+.form-select {
+    margin-top: 10px;
+    margin-left: 20px;
+    border-radius: 5px;
+    width: fit-content;
+}
+
+

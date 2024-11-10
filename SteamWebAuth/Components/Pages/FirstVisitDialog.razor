@@ -1,9 +1,11 @@
 @using SteamAuth.Helpers
-@using SteamWebAuthenticator
+@using SteamWebAuthenticator.Interfaces
 @using static Microsoft.AspNetCore.Components.Web.RenderMode
+@using Constants = SteamAuth.Constants
 @rendermode InteractiveServer
 @inject IJSRuntime Js
 @inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@inject IAccountService AccountService
 @if (IsVisible)
 {
     <div class="modal" style="display: block;">
@@ -14,12 +16,11 @@
             <div class="modal-body">
                 <p>@Message</p>
             </div>
-            <div class="modal-footer text-center justify-content-center">
+            <div class="modal-footer text-center justify-content-center flex-column">
                 <label class="btn btn-primary" for="input-file">
                     <i class="icons8-upload"></i> I already setup Steam Desktop Authenticator in another location on this PC and I want to import its account(s).
                 </label>
                 <InputFile OnChange="OnFilesSelected" id="input-file" multiple webkitdirectory hidden/>
-                <Alert @ref="alert"/>
                 <button @onclick=Cancel class="btn btn-secondary">This is my first time and I just want to sign into my Steam Account(s).</button>
             </div>
         </div>
@@ -39,8 +40,9 @@
     [Parameter]
     public EventCallback<bool> OnClose { get; set; }
 
-    private Alert alert = new Alert();
-
+    [Parameter]
+    public EventCallback<bool> OnChange { get; set; }
+    
     private async Task OnFilesSelected(InputFileChangeEventArgs e)
     {
         var files = e.GetMultipleFiles();
@@ -51,8 +53,7 @@
 
         var manifestFile = files.FirstOrDefault(file => file.Name == Constants.ManifestJson);
 
-
-        var maFiles = files.Where(file => file.Name.EndsWith(".maFile", StringComparison.OrdinalIgnoreCase)).ToList();
+        var maFiles = files.Where(file => file.Name.EndsWith(Constants.MaFile, StringComparison.OrdinalIgnoreCase)).ToList();
         if (manifestFile == null || maFiles.Count == 0)
         {
             return;
@@ -75,11 +76,10 @@
             await LocalStorage.SetItemAsStringAsync(maFile.Name, encryptedMaFile);
         }
 
-        alert.Show("Success", "All accounts and settings have been imported! Click OK to continue.");
+        await AccountService.LoadAccountsListAsync();
+        await OnChange.InvokeAsync(true);
         StateHasChanged();
-        await OnClose.InvokeAsync(false);
-        
-
+        IsVisible = false;
     }
     
     private void Cancel()

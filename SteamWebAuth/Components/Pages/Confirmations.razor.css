@@ -1,0 +1,67 @@
+﻿.confirmation-block {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+    background-color: #f9f9f9;
+    display: block; /* Ensures each block stays in its own line */
+    width: 200px; /* Ensures the block takes up the full width of the container */
+}
+
+.confirmation-header {
+    display: flex;
+    flex-direction: column; /* Aligns the icon and headline vertically */
+    align-items: flex-start; /* Aligns the icon and headline to the left */
+    margin-bottom: 12px; /* Space between the header and summary */
+}
+.confirmations-container {
+    display: flex;
+    gap: 20px; /* Adjust spacing between confirmation blocks */
+    flex-wrap: wrap; /* Allows items to wrap to the next row */
+}
+.confirmation-icon {
+    width: 170px; /* Increase the image size as needed */
+    height: 170px; /* Adjust height to match width or use auto */
+}
+
+.confirmation-header h4 {
+    margin: 0;
+    font-size: 1.2em;
+}
+
+.confirmation-summary p {
+    margin: 8px 0;
+    font-size: 1em;
+    color: #333;
+}
+
+.confirmation-actions {
+    margin-top: 12px;
+    display: flex;
+    gap: 8px; /* Adds space between buttons */
+    flex-wrap: wrap; /* Allows buttons to wrap to the next line if needed */
+}
+
+/* Spinner style */
+.spinner {
+    border: 4px solid #f3f3f3; /* Light grey background */
+    border-top: 4px solid #3498db; /* Blue top section */
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 2s linear infinite; /* This makes it spin */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* Spinner animation */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.confirmation-checkbox {
+    margin-right: 10px; /* Adds some space between the checkbox and the icon */
+}

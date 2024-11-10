@@ -1,0 +1,45 @@
+﻿@page "/confirmations"
+@using SteamWebAuthenticator.Interfaces
+@inject IAccountService AccountService;
+@using static Microsoft.AspNetCore.Components.Web.RenderMode
+@rendermode InteractiveServer
+
+<h3>Confirmation List</h3>
+
+@if (AccountService is { IsConfirmationsLoading: true })
+{
+    <div class="spinner"></div>
+}
+@if (AccountService is { IsConfirmationsLoading: false } and { SelectedAccount: not null } && AccountService.SelectedAccount!.Confirmations.Count == 0)
+{
+    <p>No confirmations available.</p>
+    <button class="btn btn-warning mb-3" @onclick="Refresh">Refresh</button>
+}
+
+else if (AccountService.SelectedAccount != null && AccountService is { IsConfirmationsLoading: false } && AccountService.SelectedAccount!.Confirmations.Count > 0)
+{
+    <button class="btn btn-primary mb-3" @onclick="SelectAllConfirmations">Select All</button>
+    <button class="btn btn-success mb-3" @onclick="AcceptSelected">Accept Selected</button>
+    <button class="btn btn-success mb-3" @onclick="AcceptAll">Accept All</button>
+    <button class="btn btn-warning mb-3" @onclick="Refresh">Refresh</button>
+    <p class="card-text">Total Price: <strong>@GetTotalPrice()</strong></p>
+    <div class="confirmations-container">
+        @foreach (var confirmation in AccountService.SelectedAccount!.Confirmations)
+        {
+            <div class="confirmation-block">
+                <div class="confirmation-header">
+                    <img src="@confirmation.Icon" alt="Confirmation Icon" class="confirmation-icon" />
+                    <h4>@confirmation.Headline</h4>
+                </div>
+                <div class="confirmation-summary">
+                    @foreach (var summaryItem in confirmation.Summary)
+                    {
+                        <p>@summaryItem</p>
+                    }
+                </div>
+                <input type="checkbox" @bind="confirmation.IsSelected" class="confirmation-checkbox" />
+            </div>
+        }
+    </div>
+
+}
