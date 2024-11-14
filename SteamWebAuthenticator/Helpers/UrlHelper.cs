@@ -3,10 +3,11 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using SteamAuth;
+using SteamWebAuthenticator.Models;
 
-namespace SteamWebAuthenticator.Services;
+namespace SteamWebAuthenticator.Helpers;
 
-public class UrlHelper(SteamGuardAccount account)
+public class UrlHelper(Account account)
 {
     public string GenerateConfirmationUrl(string tag = "conf")
     {
@@ -36,7 +37,7 @@ public class UrlHelper(SteamGuardAccount account)
         var ret = new NameValueCollection
         {
             { "p", account.DeviceId },
-            { "a", account.Session.SteamId.ToString() },
+            { "a", account.SteamId.ToString() },
             { "k", _generateConfirmationHashForTime(time, tag) },
             { "t", time.ToString() },
             { "m", "react" },

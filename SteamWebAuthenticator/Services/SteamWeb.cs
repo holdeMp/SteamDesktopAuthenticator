@@ -3,6 +3,8 @@ using System.Net.Http.Headers;
 using System.Text;
 using SteamAuth;
 using SteamAuth.Helpers;
+using SteamWebAuthenticator.Helpers;
+using SteamWebAuthenticator.Models;
 
 namespace SteamWebAuthenticator.Services
 {
@@ -12,7 +14,7 @@ namespace SteamWebAuthenticator.Services
         private readonly HttpClient _httpClient;
         private readonly UrlHelper _urlHelper;
         
-        public SteamWeb(SteamGuardAccount account, CookieContainer cookies)
+        public SteamWeb(Account account, CookieContainer cookies)
         {
             var handler = new HttpClientHandler
             {
@@ -46,7 +48,7 @@ namespace SteamWebAuthenticator.Services
         {
             string url = APIEndpoints.COMMUNITY_BASE + "/mobileconf/multiajaxop";
             // tag is different from op now
-            string tag = op ==Constants.Allow ?Constants.Accept :Constants.Reject;
+            string tag = op ==Constants.Allow ? Constants.Accept :Constants.Reject;
             string query = "op=" + op + "&" + _urlHelper.GenerateConfirmationQueryParams(tag);
             query = confirmations
                 .Aggregate(query, (current, conf) => current + ("&cid[]=" + conf.Id + "&ck[]=" + conf.Key));
@@ -60,7 +62,7 @@ namespace SteamWebAuthenticator.Services
         
             response.EnsureSuccessStatusCode();
 
-            var responseContent = response.Content.ReadAsStringAsync().Result;
+            var responseContent = await response.Content.ReadAsStringAsync();
 
             var confResponse = await responseContent.FromJsonAsync<SendConfirmationResponse>();
             return confResponse.Success;
