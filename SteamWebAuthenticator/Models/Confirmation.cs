@@ -8,29 +8,29 @@ namespace SteamWebAuthenticator.Models
     [SuppressMessage("ReSharper", "ClassNeverInstantiated.Global")]
     public class Confirmation
     {
-        [JsonPropertyName("id")]
-        public string Id { get; set; }
+        [JsonPropertyName("id")] 
+        public string Id { get; set; } = string.Empty;
 
         [JsonPropertyName("nonce")]
-        public string Key { get; set; }
+        public string Key { get; set; } = string.Empty;
 
         [JsonPropertyName("creator_id")]
-        public string Creator { get; set; }
+        public string Creator { get; set; } = string.Empty;
 
         [JsonPropertyName("headline")]
-        public string Headline { get; set; }
+        public string Headline { get; set; } = string.Empty;
 
-        [JsonPropertyName("summary")]
-        public List<string> Summary { get; set; }
+        [JsonPropertyName("summary")] 
+        public List<string> Summary { get; set; } = [];
 
         [JsonPropertyName(Constants.Accept)]
-        public string Accept { get; set; }
+        public string Accept { get; set; } = string.Empty;
 
         [JsonPropertyName(Constants.Cancel)]
-        public string Cancel { get; set; }
+        public string Cancel { get; set; } = string.Empty;
 
         [JsonPropertyName("icon")]
-        public string Icon { get; set; }
+        public string Icon { get; set; } = string.Empty;
 
         [JsonPropertyName("type")]
         [JsonConverter(typeof(JsonStringEnumConverter ))]

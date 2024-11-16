@@ -1,8 +1,6 @@
 ﻿using System.Net;
-using System.Net.Http.Headers;
 using System.Text;
 using SteamAuth;
-using SteamAuth.Helpers;
 using SteamWebAuthenticator.Helpers;
 using SteamWebAuthenticator.Models;
 using SteamWebAuthenticator.Models.Responses;

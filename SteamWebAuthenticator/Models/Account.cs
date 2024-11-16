@@ -6,7 +6,6 @@ using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using Core;
 using Serilog;
-using SteamAuth;
 using SteamWebAuthenticator.Helpers;
 
 namespace SteamWebAuthenticator.Models;
@@ -25,7 +24,7 @@ public class Account : SerializableFile
         get => backingDeviceId ?? GenerateDeviceId();
         set
         {
-            backingSessionId = value;
+            backingDeviceId = value;
             SaveAsync();
         }
     }
@@ -52,11 +51,11 @@ public class Account : SerializableFile
         }
     }
 
-    [JsonPropertyName("identity_secret")]
-    public string IdentitySecret { get; set; }
+    [JsonPropertyName("identity_secret")] 
+    public string IdentitySecret { get; set; } = string.Empty;
     
     [JsonPropertyName("shared_secret")]
-    public string SharedSecret { get; set; }
+    public string SharedSecret { get; set; } = string.Empty;
     
     public List<Confirmation> Confirmations { get; set; } = [];
     

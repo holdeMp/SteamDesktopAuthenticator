@@ -1,19 +1,18 @@
 ﻿using System.Text.Json.Serialization;
+
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 
-namespace SteamAuth.Models;
+namespace SteamWebAuthenticator.Models;
 
 // ReSharper disable once ClassNeverInstantiated.Global
 public class TimeQuery
 {
-    [JsonPropertyName("response")] 
-    // ReSharper disable once UnusedAutoPropertyAccessor.Global
-    public TimeQueryResponse Response { get; set; }
+    [JsonPropertyName("response")]
+    public TimeQueryResponse Response { get; set; } = new();
 
-    // ReSharper disable once ClassNeverInstantiated.Global
     public class TimeQueryResponse
     {
         [JsonPropertyName("server_time")] 
-        public string ServerTime { get; set; }
+        public string ServerTime { get; set; } = string.Empty;
     }
 }

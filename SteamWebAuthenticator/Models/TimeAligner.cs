@@ -1,12 +1,8 @@
-﻿using System;
-using System.Net;
-using System.Net.Http;
-using System.Text;
-using SteamAuth.Helpers;
-using SteamAuth.Models;
+﻿using System.Text;
+using SteamAuth;
 using SteamWebAuthenticator.Helpers;
 
-namespace SteamAuth
+namespace SteamWebAuthenticator.Models
 {
     /// <summary>
     /// Class to help align system time with the Steam server time. Not super advanced; probably not taking some things into account that it should.

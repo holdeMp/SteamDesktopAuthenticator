@@ -1,12 +1,9 @@
-using SteamAuth;
-using SteamAuth.Helpers;
 using SteamKit2;
 using SteamKit2.Authentication;
 using SteamKit2.Internal;
 using SteamWebAuthenticator.Helpers;
 using SteamWebAuthenticator.Interfaces;
 using SteamWebAuthenticator.Models;
-using SteamWebAuthenticator.Models.Responses;
 
 
 namespace SteamWebAuthenticator.Services;
@@ -18,11 +15,25 @@ public class AccountService : IAccountService
     private bool isRunning;
     private const byte MinimumAccessTokenValidityMinutes = 5;
     private readonly SteamClient steamClient = new();
+    private void NotifyStateChanged() => OnChange?.Invoke();
+    private string? selectedAccountName;
     public bool IsConfirmationsLoading { get; set; }
     public Account? SelectedAccount
     {
         get { return allAccounts.Find(a => a.Username == SelectedAccountName); }
     }
+    public event Action? OnChange;
+
+    public string? SelectedAccountName
+    {
+        get => selectedAccountName;
+        set
+        {
+            selectedAccountName = value;
+            NotifyStateChanged();
+        }
+    }
+
     
     public AccountService()
     {
@@ -105,13 +116,22 @@ public class AccountService : IAccountService
     
     public async Task<bool> AcceptMultipleConfirmationsAsync(List<Confirmation> confirmations)
     {
-        if (steamWeb == null) return false;
+        if (steamWeb == null)
+        {
+            return false;
+        }
         IsConfirmationsLoading = true;
         NotifyStateChanged();
-        var res =  await steamWeb.SendMultiConfirmationAjax(confirmations, Constants.Allow);
-        IsConfirmationsLoading = false;
-        NotifyStateChanged();
-        return res;
+        try
+        {
+            var res = await steamWeb.SendMultiConfirmationAjax(confirmations, Constants.Allow);
+            return res;
+        }
+        finally
+        {
+            IsConfirmationsLoading = false;
+            NotifyStateChanged();
+        }
     }
     
     public async Task<bool> AcceptConfirmationAsync(Confirmation conf)
@@ -166,48 +186,5 @@ public class AccountService : IAccountService
             NotifyStateChanged();
         }
     }
-    
-    /// <summary>
-    /// Decrypts files and populates list UI with accounts
-    /// </summary>
-    public async Task LoadAccountsListAsync()
-    {
-        string accountsDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "accounts");
 
-        if (Directory.Exists(accountsDirectory))
-        {
-            var accountFiles = Directory.GetFiles(accountsDirectory, $"*{Constants.MaFile}");
-            foreach (var filePath in accountFiles)
-            {
-                var encryptedAccountJson = await File.ReadAllTextAsync(filePath);
-                if (string.IsNullOrEmpty(encryptedAccountJson)) continue;
-
-                var decryptedJson = encryptedAccountJson.Decrypt();
-                var account = await decryptedJson.FromJsonAsync<Account>();
-                allAccounts.Add(account);
-            }
-        }
-
-        if (allAccounts.Count > 0)
-        {
-            SelectedAccountName = allAccounts.First().Username;
-            await FetchConfirmationsAsync();
-            NotifyStateChanged();
-        }
-    }
-
-    public event Action? OnChange;
-
-    private string? selectedAccountName;
-    public string? SelectedAccountName
-    {
-        get => selectedAccountName;
-        set
-        {
-            selectedAccountName = value;
-            NotifyStateChanged();
-        }
-    }
-
-    private void NotifyStateChanged() => OnChange?.Invoke();
 }
