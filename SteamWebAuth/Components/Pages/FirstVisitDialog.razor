@@ -1,10 +1,10 @@
 @using SteamAuth.Helpers
+@using SteamWebAuthenticator.Helpers
 @using SteamWebAuthenticator.Interfaces
+@using SteamWebAuthenticator.Models
 @using static Microsoft.AspNetCore.Components.Web.RenderMode
-@using Constants = SteamAuth.Constants
+@using Constants = SteamWebAuthenticator.Constants
 @rendermode InteractiveServer
-@inject IJSRuntime Js
-@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
 @inject IAccountService AccountService
 @if (IsVisible)
 {
@@ -45,41 +45,26 @@
     
     private async Task OnFilesSelected(InputFileChangeEventArgs e)
     {
-        var files = e.GetMultipleFiles();
-        if (files.Count == 0)
+        var accountFiles = e.GetMultipleFiles();
+        if (accountFiles.Count == 0)
         {
             return;
         }
 
-        var manifestFile = files.FirstOrDefault(file => file.Name == Constants.ManifestJson);
-
-        var maFiles = files.Where(file => file.Name.EndsWith(Constants.MaFile, StringComparison.OrdinalIgnoreCase)).ToList();
-        if (manifestFile == null || maFiles.Count == 0)
+        var accounts = new List<Account>();
+        foreach (var accountFile in accountFiles)
         {
-            return;
+            await using var accountFileStream = accountFile.OpenReadStream();
+            using var reader = new StreamReader(accountFileStream);
+            var accountContent = await reader.ReadToEndAsync();
+            var account = await accountContent.FromJsonAsync<Account>();
+            account = account.CreateOrLoad(account.Username + ".json");
+            accounts.Add(account);
         }
-
-        await using (var stream = manifestFile.OpenReadStream())
-        using (var reader = new StreamReader(stream))
-        {
-            var jsonContent = await reader.ReadToEndAsync();
-            var encryptedJson = jsonContent.Encrypt();
-            await LocalStorage.SetItemAsStringAsync(Constants.Manifest, encryptedJson);
-        }
-
-        foreach (var maFile in maFiles)
-        {
-            await using var stream = maFile.OpenReadStream();
-            using var reader = new StreamReader(stream);
-            var maFileContent = await reader.ReadToEndAsync();
-            var encryptedMaFile = maFileContent.Encrypt();
-            await LocalStorage.SetItemAsStringAsync(maFile.Name, encryptedMaFile);
-        }
-
-        await AccountService.LoadAccountsListAsync();
+        await AccountService.SetAccountsList(accounts);
         await OnChange.InvokeAsync(true);
-        StateHasChanged();
         IsVisible = false;
+        StateHasChanged();
     }
     
     private void Cancel()

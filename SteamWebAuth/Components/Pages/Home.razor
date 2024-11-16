@@ -3,61 +3,51 @@
 @using static Microsoft.AspNetCore.Components.Web.RenderMode
 @rendermode InteractiveServer
 @using SteamWebAuthenticator.Interfaces
-@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
 @inject IAccountService AccountService
 @inject IWebHostEnvironment HostingEnvironment
 @if (string.IsNullOrEmpty(AccountService.SelectedAccountName))
 {
     <div class="markdown-content">
-        @((MarkupString)_readMeContent)
+        @((MarkupString)readMeContent)
     </div>
 }
-<Alert @ref="_alert"/>
-<FirstVisitDialog IsVisible="@_showFirstVisitDialog"
+<Alert @ref="alert"/>
+<FirstVisitDialog IsVisible="@showFirstVisitDialog"
                   OnChange="HandleAlertChange"
                   Title="Welcome to Steam Web Authenticator" 
                   Message="Select an item to get started:" OnClose="HandleDialogClose" />
 <Confirmations />
 @code {
-    private string _readMeContent = string.Empty;
-    private bool _showFirstVisitDialog;
+    private string readMeContent = string.Empty;
+    private bool showFirstVisitDialog;
     [Inject]
     private HttpClient? Http { get; set; }
-    private Alert _alert = new();
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        await LoadManifestAsync();
-    }
+    private Alert alert = new();
 
     protected override async Task OnInitializedAsync()
     {
         AccountService.OnChange += StateHasChanged;
         if (Http != null)
         {
-            _readMeContent = await File.ReadAllTextAsync(Path.Combine(HostingEnvironment.WebRootPath, "README.md"));
-            _readMeContent = Markdig.Markdown.ToHtml(_readMeContent);
+            readMeContent = await File.ReadAllTextAsync(Path.Combine(HostingEnvironment.WebRootPath, "README.md"));
+            readMeContent = Markdig.Markdown.ToHtml(readMeContent);
+        }
+
+        if (!AccountService.GetAccountsList().Any())
+        {
+            showFirstVisitDialog = true;
         }
     }
 
     private async Task HandleAlertChange(bool newValue)
     {
         if (!newValue) return;
-        _showFirstVisitDialog = false;
-        await _alert.ShowAsync(Strings.Success,Messages.AllAccountsImported);
+        await alert.ShowAsync(Strings.Success,Messages.AllAccountsImported);
         StateHasChanged();
-    }
-    
-    private async Task LoadManifestAsync()
-    {
-        var manifest = await LocalStorage.GetItemAsync<string>(Constants.Manifest);
-        if (string.IsNullOrEmpty(manifest))
-        {
-            _showFirstVisitDialog = true;
-        }
     }
     
     private void HandleDialogClose(bool result)
     {
-        _showFirstVisitDialog = false;
+        showFirstVisitDialog = false;
     }
 }

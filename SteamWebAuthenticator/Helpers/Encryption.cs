@@ -1,5 +1,7 @@
 using System.Text;
 using Jose;
+using SteamWebAuthenticator;
+using SteamWebAuthenticator.Models;
 
 namespace SteamAuth.Helpers;
 

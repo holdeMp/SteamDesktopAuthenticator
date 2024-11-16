@@ -8,7 +8,7 @@ public abstract class SerializableFile : IDisposable {
 	
 	private static readonly SemaphoreSlim GlobalFileSemaphore = new(1, 1);
 
-	private readonly SemaphoreSlim _fileSemaphore = new(1, 1);
+	private readonly SemaphoreSlim fileSemaphore = new(1, 1);
 
 	protected string? FilePath { get; set; }
 
@@ -19,20 +19,20 @@ public abstract class SerializableFile : IDisposable {
 
 	private void Dispose(bool disposing) {
 		if (disposing) {
-			_fileSemaphore.Dispose();
+			fileSemaphore.Dispose();
 		}
 	}
 
-	protected abstract Task Save();
-	
-	protected static async Task Save<T>(T serializableFile) where T : SerializableFile {
+	public abstract Task SaveAsync();
+
+	protected static async Task SaveAsync<T>(T serializableFile) where T : SerializableFile {
 		ArgumentNullException.ThrowIfNull(serializableFile);
 
 		if (string.IsNullOrEmpty(serializableFile.FilePath)) {
 			throw new InvalidOperationException(nameof(serializableFile.FilePath));
 		}
 
-		await serializableFile._fileSemaphore.WaitAsync().ConfigureAwait(false);
+		await serializableFile.fileSemaphore.WaitAsync().ConfigureAwait(false);
 
 		try {
 
@@ -54,16 +54,18 @@ public abstract class SerializableFile : IDisposable {
 
 				await File.WriteAllTextAsync(newFilePath, json).ConfigureAwait(false);
 
-				File.Replace(newFilePath, serializableFile.FilePath, null);
-			} else {
+				File.Replace(newFilePath, Path.Combine(Constants.Accounts, serializableFile.FilePath), null);
+			} 
+			else 
+			{
 				await File.WriteAllTextAsync(newFilePath, json).ConfigureAwait(false);
 
-				File.Move(newFilePath, serializableFile.FilePath);
+				File.Move(newFilePath, Path.Combine(Constants.Accounts, serializableFile.FilePath));
 			}
 		} catch (Exception e) {
 			Log.Error(e.Message);
 		} finally {
-			serializableFile._fileSemaphore.Release();
+			serializableFile.fileSemaphore.Release();
 		}
 	}
 

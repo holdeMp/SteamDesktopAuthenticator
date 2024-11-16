@@ -7,6 +7,7 @@ public partial class Confirmations : ComponentBase, IDisposable
     protected override Task OnInitializedAsync()
     {
         AccountService.OnChange += StateHasChanged;
+        Refresh();
         return Task.CompletedTask;
     }
     
@@ -69,14 +70,32 @@ public partial class Confirmations : ComponentBase, IDisposable
     
     private async void AcceptSelected()
     {
-        if (AccountService.SelectedAccount == null) return;
-        var result = await AccountService.AcceptMultipleConfirmationsAsync(AccountService.SelectedAccount.Confirmations
-            .Where(c => c.IsSelected).ToList());
-        if (result != true) Refresh();
+        AccountService.IsConfirmationsLoading = true;
+        StateHasChanged();
+        if (AccountService.SelectedAccount == null || !AccountService.SelectedAccount.Confirmations
+                .Any(c => c.IsSelected))
+        {
+            return;
+        }
+        var selectedConfirmations = AccountService.SelectedAccount.Confirmations
+            .Where(c => c.IsSelected).ToList();
+        if (selectedConfirmations.Count == 1)
+        {
+            await AccountService.AcceptConfirmationAsync(selectedConfirmations.First());
+            Refresh();
+            AccountService.IsConfirmationsLoading = false;
+            StateHasChanged();
+            return;
+        }
+        await AccountService.AcceptMultipleConfirmationsAsync(selectedConfirmations);
+        Refresh();
+        StateHasChanged();
+        AccountService.IsConfirmationsLoading = false;
     }
 
     private async void Refresh()
     {
+        StateHasChanged();
         await AccountService.FetchConfirmationsAsync();
         StateHasChanged();
     }

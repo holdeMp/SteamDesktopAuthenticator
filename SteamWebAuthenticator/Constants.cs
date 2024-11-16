@@ -1,11 +1,10 @@
 using Jose;
 
-namespace SteamAuth;
+namespace SteamWebAuthenticator;
 
 public static class Constants
 {
-    public const string Manifest = "manifest";
-    public const string ManifestJson = "manifest.json";
+    public static string Accounts => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Accounts");
     public const string Allow = "allow";
     public const string Cancel = "cancel";
     public const string Accept = "accept";

@@ -1,8 +1,12 @@
 ﻿using System.Net;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using Core;
 using Serilog;
+using SteamAuth;
 using SteamWebAuthenticator.Helpers;
 
 namespace SteamWebAuthenticator.Models;
@@ -14,42 +18,45 @@ public class Account : SerializableFile
     
     public ulong SteamId { get; set; }
 
-    private string? _backingSessionId;
-    private string? _backingDeviceId;
+    private string? backingSessionId;
+    private string? backingDeviceId;
     public string DeviceId
     {
-        get => _backingDeviceId ?? GenerateDeviceId();
+        get => backingDeviceId ?? GenerateDeviceId();
         set
         {
-            _backingSessionId = value;
-            Save();
+            backingSessionId = value;
+            SaveAsync();
         }
     }
 
-    private Cookie? _backingTradeBackSessionCookie;
+    private Cookie? backingTradeBackSessionCookie;
     public Cookie? TradeBackSessionCookie
     {
-        get => _backingTradeBackSessionCookie;
+        get => backingTradeBackSessionCookie;
         set
         {
-            _backingTradeBackSessionCookie = value;
-            Save();
+            backingTradeBackSessionCookie = value;
+            SaveAsync();
         }
     }
     
-    private string _backingXcsrfToken = string.Empty;
+    private string backingXcsrfToken = string.Empty;
     public string XcsrfToken
     {
-        get => _backingXcsrfToken;
+        get => backingXcsrfToken;
         set
         {
-            _backingXcsrfToken = value;
-            Save();
+            backingXcsrfToken = value;
+            SaveAsync();
         }
     }
 
     [JsonPropertyName("identity_secret")]
     public string IdentitySecret { get; set; }
+    
+    [JsonPropertyName("shared_secret")]
+    public string SharedSecret { get; set; }
     
     public List<Confirmation> Confirmations { get; set; } = [];
     
@@ -60,26 +67,26 @@ public class Account : SerializableFile
     
     [JsonPropertyName("SessionID")] 
     public string SessionId { 
-        get => _backingSessionId ?? string.Empty;
+        get => backingSessionId ?? string.Empty;
         set
         {
-            _backingSessionId = value;
-            Save();
+            backingSessionId = value;
+            SaveAsync();
         } 
     }
     
-    private string? _backingSteamAccessToken;
+    private string? backingSteamAccessToken;
     
     public DateTime? AccessTokenValidUntil;
     private const byte MinimumAccessTokenValidityMinutes = 5;
     public string? SteamAccessToken { 		
-        get => _backingSteamAccessToken;
+        get => backingSteamAccessToken;
 
         set {
             AccessTokenValidUntil = null;
 
             if (string.IsNullOrEmpty(value)) {
-                _backingSteamAccessToken = null;
+                backingSteamAccessToken = null;
 
                 return;
             }
@@ -90,13 +97,13 @@ public class Account : SerializableFile
                 return;
             }
 
-            _backingSteamAccessToken = value;
+            backingSteamAccessToken = value;
 
             if (accessToken.ValidTo > DateTime.MinValue) {
                 AccessTokenValidUntil = accessToken.ValidTo;
             }
 
-            Save();
+            SaveAsync();
         }
     }
     public string? SteamRefreshToken { get; set; }
@@ -104,14 +111,13 @@ public class Account : SerializableFile
     public bool ShouldRememberPassword { get; set; }
 
     public bool IsLoggedIn { get; set; }
-    
-    protected override Task Save()  => Save(this);
+    public override Task SaveAsync()  => SaveAsync(this);
     
     public Account CreateOrLoad(string filePath) {
         ArgumentException.ThrowIfNullOrEmpty(filePath);
         FilePath = filePath;
         if (!File.Exists(filePath)) {
-            Utilities.InBackground(() => Save(this));
+            Utilities.InBackground(() => SaveAsync(this));
             return this;
         }
 		
@@ -126,5 +132,48 @@ public class Account : SerializableFile
 
         Log.Error(Strings.FormatErrorIsEmpty(nameof(json)));
         return this;
+    }
+    
+    public string GenerateSteamGuardCode()
+    {
+        return GenerateSteamGuardCodeForTime(TimeAligner.GetSteamTime());
+    }
+    private static byte[] _steamGuardCodeTranslations = [50, 51, 52, 53, 54, 55, 56, 57, 66, 67, 68, 70, 71, 72, 74, 75, 77, 78, 80, 81, 82, 84, 86, 87, 88, 89
+    ];
+    
+    public string GenerateSteamGuardCodeForTime(long time)
+    {
+        if (SharedSecret.Length == 0)
+        {
+            return "";
+        }
+
+        string sharedSecretUnescaped = Regex.Unescape(SharedSecret);
+        byte[] sharedSecretArray = Convert.FromBase64String(sharedSecretUnescaped);
+        byte[] timeArray = new byte[8];
+
+        time /= 30L;
+
+        for (int i = 8; i > 0; i--)
+        {
+            timeArray[i - 1] = (byte)time;
+            time >>= 8;
+        }
+
+        HMACSHA1 hmacGenerator = new HMACSHA1();
+        hmacGenerator.Key = sharedSecretArray;
+        byte[] hashedData = hmacGenerator.ComputeHash(timeArray);
+        byte[] codeArray = new byte[5];
+        
+        byte b = (byte)(hashedData[19] & 0xF);
+        int codePoint = (hashedData[b] & 0x7F) << 24 | (hashedData[b + 1] & 0xFF) << 16 | (hashedData[b + 2] & 0xFF) << 8 | (hashedData[b + 3] & 0xFF);
+
+        for (int i = 0; i < 5; ++i)
+        {
+            codeArray[i] = _steamGuardCodeTranslations[codePoint % _steamGuardCodeTranslations.Length];
+            codePoint /= _steamGuardCodeTranslations.Length;
+        }
+        
+        return Encoding.UTF8.GetString(codeArray);
     }
 }

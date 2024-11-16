@@ -44,7 +44,7 @@ public static class CookieHelper
         return cookieString.ToString();
     }
 
-    public static string GetSteamLoginSecure(Account account)
+    private static string GetSteamLoginSecure(Account account)
     {
         if (account == null)
             throw new Exception(Messages.SelectedAccountIsEmpty);

@@ -5,14 +5,15 @@ using SteamAuth;
 using SteamAuth.Helpers;
 using SteamWebAuthenticator.Helpers;
 using SteamWebAuthenticator.Models;
+using SteamWebAuthenticator.Models.Responses;
 
 namespace SteamWebAuthenticator.Services
 {
     public class SteamWeb
     {
         private const string MobileAppUserAgent = "okhttp/3.12.12";
-        private readonly HttpClient _httpClient;
-        private readonly UrlHelper _urlHelper;
+        private readonly HttpClient httpClient;
+        private readonly UrlHelper urlHelper;
         
         public SteamWeb(Account account, CookieContainer cookies)
         {
@@ -21,11 +22,11 @@ namespace SteamWebAuthenticator.Services
                 CookieContainer = cookies,
                 UseCookies = true
             };
-            _httpClient = new HttpClient(handler);
+            httpClient = new HttpClient(handler);
 
-            _httpClient.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", MobileAppUserAgent);
+            httpClient.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", MobileAppUserAgent);
 
-            _urlHelper = new UrlHelper(account);
+            urlHelper = new UrlHelper(account);
         }
 
         public async Task<bool> SendConfirmationAjax(Confirmation conf, string op)
@@ -34,11 +35,11 @@ namespace SteamWebAuthenticator.Services
             string queryString = "?op=" + op + "&";
             // tag is different from op now
             string tag = op == Constants.Allow ? Constants.Accept :Constants.Reject;
-            queryString += _urlHelper.GenerateConfirmationQueryParams(tag);
+            queryString += urlHelper.GenerateConfirmationQueryParams(tag);
             queryString += "&cid=" + conf.Id + "&ck=" + conf.Key;
             url += queryString;
 
-            string response = await GetRequest(url);
+            string response = await GetRequestAsync(url);
 
             var confResponse = await response.FromJsonAsync<SendConfirmationResponse>();
             return confResponse.Success;
@@ -49,16 +50,16 @@ namespace SteamWebAuthenticator.Services
             string url = APIEndpoints.COMMUNITY_BASE + "/mobileconf/multiajaxop";
             // tag is different from op now
             string tag = op ==Constants.Allow ? Constants.Accept :Constants.Reject;
-            string query = "op=" + op + "&" + _urlHelper.GenerateConfirmationQueryParams(tag);
+            string query = "op=" + op + "&" + urlHelper.GenerateConfirmationQueryParams(tag);
             query = confirmations
                 .Aggregate(query, (current, conf) => current + ("&cid[]=" + conf.Id + "&ck[]=" + conf.Key));
 
-            _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(SteamWeb.MobileAppUserAgent);
-            _httpClient.DefaultRequestHeaders.AcceptEncoding.ParseAdd("gzip, deflate");
-            _httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
+            httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(SteamWeb.MobileAppUserAgent);
+            httpClient.DefaultRequestHeaders.AcceptEncoding.ParseAdd("gzip, deflate");
+            httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
                 "Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
             var content = new StringContent(query, Encoding.UTF8, "application/x-www-form-urlencoded");
-            var response = _httpClient.PostAsync(url, content).Result;
+            var response = httpClient.PostAsync(url, content).Result;
         
             response.EnsureSuccessStatusCode();
 
@@ -68,16 +69,23 @@ namespace SteamWebAuthenticator.Services
             return confResponse.Success;
         }
         
-        public async Task<string> GetRequest(string url)
+        public async Task<ConfirmationsResponse> GetConfUrlAsync(string url)
         {
-            var response = await _httpClient.GetStringAsync(url);
+            var respContent = await httpClient.GetStringAsync(url);
+            var response = await respContent.FromJsonAsync<ConfirmationsResponse>();
+            return response;
+        }
+        
+        public async Task<string> GetRequestAsync(string url)
+        {
+            var response = await httpClient.GetStringAsync(url);
             return response;
         }
 
         public async Task<string> PostRequest(string url, Dictionary<string, string> body)
         {
             var content = new FormUrlEncodedContent(body);
-            var response = await _httpClient.PostAsync(url, content);
+            var response = await httpClient.PostAsync(url, content);
             response.EnsureSuccessStatusCode(); // Throw if not a success code.
             return await response.Content.ReadAsStringAsync();
         }
