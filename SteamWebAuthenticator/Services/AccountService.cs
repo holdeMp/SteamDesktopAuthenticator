@@ -10,89 +10,125 @@ namespace SteamWebAuthenticator.Services;
 
 public class AccountService : IAccountService
 {
-    private List<Account> allAccounts = [];
-    private SteamWeb? steamWeb;
-    private bool isRunning;
+    private List<Account> _allAccounts = [];
+    private SteamWeb? _steamWeb;
     private const byte MinimumAccessTokenValidityMinutes = 5;
-    private readonly SteamClient steamClient = new();
+    private readonly SteamClient _steamClient = new();
     private void NotifyStateChanged() => OnChange?.Invoke();
-    private string? selectedAccountName;
+    private string? _selectedAccountName;
+    public bool IsConnected { get; set; }
+    private bool IsConnecting { get; set; }
     public bool IsConfirmationsLoading { get; set; }
     public Account? SelectedAccount
     {
-        get { return allAccounts.Find(a => a.Username == SelectedAccountName); }
+        get { return _allAccounts.Find(a => a.Username == SelectedAccountName); }
     }
     public event Action? OnChange;
 
     public string? SelectedAccountName
     {
-        get => selectedAccountName;
+        get => _selectedAccountName;
         set
         {
-            selectedAccountName = value;
+            _selectedAccountName = value;
             NotifyStateChanged();
         }
     }
-
     
     public AccountService()
     {
-        if (!Directory.Exists(Constants.Accounts))
-        {
-            Directory.CreateDirectory(Constants.Accounts);
-            return;
-        }
-        var accountFiles = Directory.GetFiles(Constants.Accounts, "*.json");
-        var containsAccounts = accountFiles.Length > 0;
+        EnsureAccountsDirectoryExists();
+        LoadAccounts();
 
-        if (!containsAccounts) return;
-        foreach (var accountFile in accountFiles)
-        {
-            var accountJson = File.ReadAllText(accountFile);
-            allAccounts.Add(accountJson.FromJson<Account>());
-        }
-        var minimumValidUntil = DateTime.UtcNow.AddMinutes(MinimumAccessTokenValidityMinutes);
-        SelectedAccountName = allAccounts.First().Username;
-        if (SelectedAccount != null && 
-            SelectedAccount.SteamId != default && 
-            !string.IsNullOrEmpty(SelectedAccount.SteamAccessToken) && 
-            SelectedAccount.AccessTokenValidUntil >= minimumValidUntil) return;
-        Connect();
+        if (_allAccounts.Count == 0)
+            return;
+
+        InitializeSelectedAccount();
+        ValidateAndConnect();
     }
     
     public AccountService(Account account)
     {
-        allAccounts.Add(account);
+        _allAccounts.Add(account);
         SelectedAccountName = account.Username;
-        steamWeb = new SteamWeb(account, CookieHelper.GetCookies(account));
+        _steamWeb = new SteamWeb(account, CookieHelper.GetCookies(account));
     }
     
     public List<Account> GetAccountsList()
     {
-        return allAccounts;
+        return _allAccounts;
+    }
+
+    private static void EnsureAccountsDirectoryExists()
+    {
+        if (!Directory.Exists(Constants.Accounts))
+        {
+            Directory.CreateDirectory(Constants.Accounts);
+        }
+    }
+
+    private void LoadAccounts()
+    {
+        var accountFiles = Directory.GetFiles(Constants.Accounts, "*.json");
+        foreach (var accountFile in accountFiles)
+        {
+            var accountJson = File.ReadAllText(accountFile);
+            var account = accountJson.FromJson<Account>();
+            _allAccounts.Add(account);
+        }
+    }
+
+    private void InitializeSelectedAccount()
+    {
+        SelectedAccountName = _allAccounts.First().Username;
+
+        if (SelectedAccount == null)
+            return;
+
+        if (string.IsNullOrWhiteSpace(SelectedAccount.SessionId))
+        {
+            SelectedAccount.SessionId = CookieHelper.GenerateSessionId();
+        }
+    }
+
+    private void ValidateAndConnect()
+    {
+        var minimumValidUntil = DateTime.UtcNow.AddMinutes(MinimumAccessTokenValidityMinutes);
+
+        if (SelectedAccount != null &&
+            SelectedAccount.SteamId != default &&
+            !string.IsNullOrEmpty(SelectedAccount.SteamAccessToken) &&
+            SelectedAccount.AccessTokenValidUntil >= minimumValidUntil)
+        {
+            IsConnected = true;
+        }
+        else
+        {
+            Connect();
+        }
     }
 
     private void Connect()
     {
-        isRunning = true;
-        if (steamClient.IsConnected) {
+        IsConnecting = true;
+        if (_steamClient.IsConnected) {
             return;
         }
         
-        var manager = new CallbackManager(steamClient);
+        var manager = new CallbackManager(_steamClient);
 
         manager.Subscribe<SteamClient.ConnectedCallback>(OnConnected);
 
 
-        steamClient.Connect();
-        Task.Run(() => { while (isRunning) { manager.RunWaitCallbacks(TimeSpan.FromSeconds(1)); } });
+        _steamClient.Connect();
+        Task.Run(() => { while (IsConnecting) { manager.RunWaitCallbacks(TimeSpan.FromSeconds(1)); } });
     }
 
     private async void OnConnected(SteamClient.ConnectedCallback callback)
     {
         if (SelectedAccount != null)
         {
-            var authSession = await steamClient.Authentication.BeginAuthSessionViaCredentialsAsync(
+            var authSession = await _steamClient.Authentication.BeginAuthSessionViaCredentialsAsync(
                 new AuthSessionDetails
                 {
                     Username = SelectedAccount.Username,
@@ -111,12 +147,13 @@ public class AccountService : IAccountService
             SelectedAccount.SteamAccessToken = pollResponse.AccessToken;
         }
 
-        isRunning = false;
+        IsConnecting = false;
+        IsConnected = true;
     }
     
     public async Task<bool> AcceptMultipleConfirmationsAsync(List<Confirmation> confirmations)
     {
-        if (steamWeb == null)
+        if (_steamWeb == null)
         {
             return false;
         }
@@ -124,7 +161,7 @@ public class AccountService : IAccountService
         NotifyStateChanged();
         try
         {
-            var res = await steamWeb.SendMultiConfirmationAjax(confirmations, Constants.Allow);
+            var res = await _steamWeb.SendMultiConfirmationAjax(confirmations, Constants.Allow);
             return res;
         }
         finally
@@ -136,10 +173,10 @@ public class AccountService : IAccountService
     
     public async Task<bool> AcceptConfirmationAsync(Confirmation conf)
     {
-        if (steamWeb == null) return false;
+        if (_steamWeb == null) return false;
         IsConfirmationsLoading = true;
         NotifyStateChanged();
-        var res = await steamWeb.SendConfirmationAjax(conf, Constants.Allow);
+        var res = await _steamWeb.SendConfirmationAjax(conf, Constants.Allow);
         IsConfirmationsLoading = false;
         NotifyStateChanged();
         return res;
@@ -147,7 +184,7 @@ public class AccountService : IAccountService
 
     public async Task<bool> DenyConfirmation(Confirmation conf)
     {
-        return steamWeb != null && await steamWeb.SendConfirmationAjax(conf, Constants.Cancel);
+        return _steamWeb != null && await _steamWeb.SendConfirmationAjax(conf, Constants.Cancel);
     }
 
     public async Task FetchConfirmationsAsync()
@@ -157,10 +194,10 @@ public class AccountService : IAccountService
         NotifyStateChanged();
         try
         {
-            steamWeb = new SteamWeb(SelectedAccount, CookieHelper.GetCookies(SelectedAccount));
+            _steamWeb = new SteamWeb(SelectedAccount, CookieHelper.GetCookies(SelectedAccount));
             var urlHelper = new UrlHelper(SelectedAccount);
             var url = urlHelper.GenerateConfirmationUrl();
-            var response = await steamWeb.GetConfUrlAsync(url);
+            var response = await _steamWeb.GetConfUrlAsync(url);
 
             if (response.NeedAuthentication)
             {
@@ -178,10 +215,10 @@ public class AccountService : IAccountService
     
     public async Task SetAccountsList(List<Account> accounts)
     {
-        allAccounts = accounts;
-        if (allAccounts.Count > 0)
+        _allAccounts = accounts;
+        if (_allAccounts.Count > 0)
         {
-            SelectedAccountName = allAccounts.First().Username;
+            SelectedAccountName = _allAccounts.First().Username;
             await FetchConfirmationsAsync();
             NotifyStateChanged();
         }

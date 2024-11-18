@@ -8,9 +8,11 @@ public abstract class SerializableFile : IDisposable {
 	
 	private static readonly SemaphoreSlim GlobalFileSemaphore = new(1, 1);
 
-	private readonly SemaphoreSlim fileSemaphore = new(1, 1);
+	private readonly SemaphoreSlim _fileSemaphore = new(1, 1);
 
-	protected string? FilePath { get; set; }
+	public string? Username { get; set; }
+	
+	public string? FilePath => $"{Username}{Constants.JsonExtension}";
 
 	public void Dispose() {
 		Dispose(true);
@@ -19,7 +21,7 @@ public abstract class SerializableFile : IDisposable {
 
 	private void Dispose(bool disposing) {
 		if (disposing) {
-			fileSemaphore.Dispose();
+			_fileSemaphore.Dispose();
 		}
 	}
 
@@ -32,7 +34,7 @@ public abstract class SerializableFile : IDisposable {
 			throw new InvalidOperationException(nameof(serializableFile.FilePath));
 		}
 
-		await serializableFile.fileSemaphore.WaitAsync().ConfigureAwait(false);
+		await serializableFile._fileSemaphore.WaitAsync().ConfigureAwait(false);
 
 		try {
 
@@ -65,7 +67,7 @@ public abstract class SerializableFile : IDisposable {
 		} catch (Exception e) {
 			Log.Error(e.Message);
 		} finally {
-			serializableFile.fileSemaphore.Release();
+			serializableFile._fileSemaphore.Release();
 		}
 	}
 

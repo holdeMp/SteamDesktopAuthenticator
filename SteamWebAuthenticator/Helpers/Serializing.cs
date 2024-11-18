@@ -1,4 +1,6 @@
 using System.Text.Json;
+using Serilog;
+using Serilog.Core;
 
 namespace SteamWebAuthenticator.Helpers;
 
@@ -33,8 +35,16 @@ public static class Serializing
     
     public static async Task<T> FromJsonAsync<T>(this string json)
     {
-        using var memoryStream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json));
-        var result = await JsonSerializer.DeserializeAsync<T>(memoryStream);
-        return result!;
+        try
+        {
+            using var memoryStream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json));
+            var result = await JsonSerializer.DeserializeAsync<T>(memoryStream);
+            return result!;
+        }
+        catch (Exception e)
+        {
+            Log.Error(e, $"Failed to deserialize: {json}");
+            throw;
+        }
     }
 }

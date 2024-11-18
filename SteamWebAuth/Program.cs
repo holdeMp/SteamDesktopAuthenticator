@@ -1,4 +1,3 @@
-using Blazored.LocalStorage;
 using SteamWebAuth.Components;
 using SteamWebAuthenticator.Interfaces;
 using SteamWebAuthenticator.Services;
@@ -11,7 +10,6 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddScoped<IAccountService, AccountService>();
-builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddHttpClient();
 builder.Services.AddServerSideBlazor().AddCircuitOptions(options => 
 { 

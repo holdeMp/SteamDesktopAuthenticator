@@ -12,41 +12,40 @@ namespace SteamWebAuthenticator.Models;
 
 public class Account : SerializableFile
 {
-    public string? Username { get; set; }
     public string? Password { get; set; }
     
     public ulong SteamId { get; set; }
 
-    private string? backingSessionId;
-    private string? backingDeviceId;
+    private string? _backingSessionId;
+    private string? _backingDeviceId;
     public string DeviceId
     {
-        get => backingDeviceId ?? GenerateDeviceId();
+        get => _backingDeviceId ?? GenerateDeviceId();
         set
         {
-            backingDeviceId = value;
+            _backingDeviceId = value;
             SaveAsync();
         }
     }
 
-    private Cookie? backingTradeBackSessionCookie;
+    private Cookie? _backingTradeBackSessionCookie;
     public Cookie? TradeBackSessionCookie
     {
-        get => backingTradeBackSessionCookie;
+        get => _backingTradeBackSessionCookie;
         set
         {
-            backingTradeBackSessionCookie = value;
+            _backingTradeBackSessionCookie = value;
             SaveAsync();
         }
     }
     
-    private string backingXcsrfToken = string.Empty;
+    private string _backingXcsrfToken = string.Empty;
     public string XcsrfToken
     {
-        get => backingXcsrfToken;
+        get => _backingXcsrfToken;
         set
         {
-            backingXcsrfToken = value;
+            _backingXcsrfToken = value;
             SaveAsync();
         }
     }
@@ -66,26 +65,26 @@ public class Account : SerializableFile
     
     [JsonPropertyName("SessionID")] 
     public string SessionId { 
-        get => backingSessionId ?? string.Empty;
+        get => _backingSessionId ?? string.Empty;
         set
         {
-            backingSessionId = value;
+            _backingSessionId = value;
             SaveAsync();
         } 
     }
     
-    private string? backingSteamAccessToken;
+    private string? _backingSteamAccessToken;
     
     public DateTime? AccessTokenValidUntil;
     private const byte MinimumAccessTokenValidityMinutes = 5;
     public string? SteamAccessToken { 		
-        get => backingSteamAccessToken;
+        get => _backingSteamAccessToken;
 
         set {
             AccessTokenValidUntil = null;
 
             if (string.IsNullOrEmpty(value)) {
-                backingSteamAccessToken = null;
+                _backingSteamAccessToken = null;
 
                 return;
             }
@@ -96,7 +95,7 @@ public class Account : SerializableFile
                 return;
             }
 
-            backingSteamAccessToken = value;
+            _backingSteamAccessToken = value;
 
             if (accessToken.ValidTo > DateTime.MinValue) {
                 AccessTokenValidUntil = accessToken.ValidTo;
@@ -114,7 +113,6 @@ public class Account : SerializableFile
     
     public Account CreateOrLoad(string filePath) {
         ArgumentException.ThrowIfNullOrEmpty(filePath);
-        FilePath = filePath;
         if (!File.Exists(filePath)) {
             Utilities.InBackground(() => SaveAsync(this));
             return this;
@@ -125,7 +123,6 @@ public class Account : SerializableFile
         var account = JsonSerializer.Deserialize<Account>(json);
         if (account != null)
         {
-            account.FilePath = filePath;
             if (!string.IsNullOrEmpty(json)) return account ?? throw new InvalidOperationException();
         }
 
