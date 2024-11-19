@@ -124,7 +124,18 @@ public class AccountService : IAccountService
         Task.Run(() => { while (IsConnecting) { manager.RunWaitCallbacks(TimeSpan.FromSeconds(1)); } });
     }
 
-    private async void OnConnected(SteamClient.ConnectedCallback callback)
+    private void OnConnected(SteamClient.ConnectedCallback callback)
+    {
+        _ = HandleConnectedAsync(callback).ContinueWith(t =>
+        {
+            if (t.Exception != null)
+            {
+                Log.Error(t.Exception, "Error in HandleConnectedAsync");
+            }
+        }, TaskContinuationOptions.OnlyOnFaulted);
+    }
+
+    private async Task HandleConnectedAsync(SteamClient.ConnectedCallback callback)
     {
         if (SelectedAccount != null)
         {

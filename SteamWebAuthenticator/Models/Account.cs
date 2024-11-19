@@ -12,71 +12,55 @@ namespace SteamWebAuthenticator.Models;
 
 public class Account : SerializableFile
 {
-    public string? Password { get; set; }
-    
-    public ulong SteamId { get; set; }
+    private const byte MinimumAccessTokenValidityMinutes = 5;
+
+    private static byte[] _steamGuardCodeTranslations =
+        [50, 51, 52, 53, 54, 55, 56, 57, 66, 67, 68, 70, 71, 72, 74, 75, 77, 78, 80, 81, 82, 84, 86, 87, 88, 89];
 
     private string? _backingSessionId;
     private string? _backingDeviceId;
+    private Cookie? _backingTradeBackSessionCookie;
+    private string _backingXcsrfToken = string.Empty;
+    private string _backingSteamAccessToken = string.Empty;
+    public string? Password { get; init; }
+    
+    public ulong SteamId { get; set; }
+
     public string DeviceId
     {
         get => _backingDeviceId ?? GenerateDeviceId();
-        set
-        {
-            _backingDeviceId = value;
-            SaveAsync();
-        }
+        init => SetProperty(ref _backingDeviceId, value);
     }
 
-    private Cookie? _backingTradeBackSessionCookie;
     public Cookie? TradeBackSessionCookie
     {
         get => _backingTradeBackSessionCookie;
-        set
-        {
-            _backingTradeBackSessionCookie = value;
-            SaveAsync();
-        }
+        set => SetProperty(ref _backingTradeBackSessionCookie, value);
     }
     
-    private string _backingXcsrfToken = string.Empty;
     public string XcsrfToken
     {
         get => _backingXcsrfToken;
-        set
-        {
-            _backingXcsrfToken = value;
-            SaveAsync();
-        }
+        set => SetProperty(ref _backingXcsrfToken, value);
     }
 
     [JsonPropertyName("identity_secret")] 
-    public string IdentitySecret { get; set; } = string.Empty;
+    public string IdentitySecret { get; init; } = string.Empty;
     
     [JsonPropertyName("shared_secret")]
-    public string SharedSecret { get; set; } = string.Empty;
+    public string SharedSecret { get; init; } = string.Empty;
     
     public List<Confirmation> Confirmations { get; set; } = [];
-    
-    public static string GenerateDeviceId()
-    {
-        return "android:" + Guid.NewGuid();
-    }
     
     [JsonPropertyName("SessionID")] 
     public string SessionId { 
         get => _backingSessionId ?? string.Empty;
-        set
-        {
-            _backingSessionId = value;
-            SaveAsync();
-        } 
+        set => SetProperty(ref _backingSessionId, value);
     }
     
-    private string? _backingSteamAccessToken;
     
     public DateTime? AccessTokenValidUntil;
-    private const byte MinimumAccessTokenValidityMinutes = 5;
+    
     public string? SteamAccessToken { 		
         get => _backingSteamAccessToken;
 
@@ -84,8 +68,7 @@ public class Account : SerializableFile
             AccessTokenValidUntil = null;
 
             if (string.IsNullOrEmpty(value)) {
-                _backingSteamAccessToken = null;
-
+                _backingSteamAccessToken = string.Empty;
                 return;
             }
 
@@ -101,14 +84,24 @@ public class Account : SerializableFile
                 AccessTokenValidUntil = accessToken.ValidTo;
             }
 
-            SaveAsync();
+            if (!string.IsNullOrWhiteSpace(Username))
+            {
+                SaveAsync();
+            }
         }
     }
+    
     public string? SteamRefreshToken { get; set; }
     public string? PreviouslyStoredGuardData { get; set; }
-    public bool ShouldRememberPassword { get; set; }
+    public bool ShouldRememberPassword { get; init; }
 
-    public bool IsLoggedIn { get; set; }
+    public bool IsLoggedIn { get; init; }
+    
+    public static string GenerateDeviceId()
+    {
+        return "android:" + Guid.NewGuid();
+    }
+    
     public override Task SaveAsync()  => SaveAsync(this);
     
     public Account CreateOrLoad(string filePath) {
@@ -134,8 +127,6 @@ public class Account : SerializableFile
     {
         return GenerateSteamGuardCodeForTime(TimeAligner.GetSteamTime());
     }
-    private static byte[] _steamGuardCodeTranslations = [50, 51, 52, 53, 54, 55, 56, 57, 66, 67, 68, 70, 71, 72, 74, 75, 77, 78, 80, 81, 82, 84, 86, 87, 88, 89
-    ];
     
     public string GenerateSteamGuardCodeForTime(long time)
     {
@@ -171,5 +162,14 @@ public class Account : SerializableFile
         }
         
         return Encoding.UTF8.GetString(codeArray);
+    }
+    
+    private void SetProperty<T>(ref T backingField, T value)
+    {
+        backingField = value;
+        if (!string.IsNullOrWhiteSpace(Username))
+        {
+            SaveAsync();
+        }
     }
 }
