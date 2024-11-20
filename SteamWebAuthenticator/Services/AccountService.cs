@@ -1,3 +1,4 @@
+using Serilog;
 using SteamKit2;
 using SteamKit2.Authentication;
 using SteamKit2.Internal;
@@ -93,12 +94,10 @@ public class AccountService : IAccountService
 
     private void ValidateAndConnect()
     {
-        var minimumValidUntil = DateTime.UtcNow.AddMinutes(MinimumAccessTokenValidityMinutes);
 
         if (SelectedAccount != null &&
-            SelectedAccount.SteamId != default &&
-            !string.IsNullOrEmpty(SelectedAccount.SteamAccessToken) &&
-            SelectedAccount.AccessTokenValidUntil >= minimumValidUntil)
+            SelectedAccount.SteamId != default && SelectedAccount.IsAuthenticated
+            )
         {
             IsConnected = true;
         }
@@ -111,7 +110,8 @@ public class AccountService : IAccountService
     private void Connect()
     {
         IsConnecting = true;
-        if (_steamClient.IsConnected) {
+        var minimumValidUntil = DateTime.UtcNow.AddMinutes(MinimumAccessTokenValidityMinutes);
+        if (_steamClient.IsConnected && SelectedAccount?.AccessTokenValidUntil >= minimumValidUntil) {
             return;
         }
         
@@ -137,7 +137,9 @@ public class AccountService : IAccountService
 
     private async Task HandleConnectedAsync(SteamClient.ConnectedCallback callback)
     {
-        if (SelectedAccount != null)
+        if (SelectedAccount != null && 
+            !string.IsNullOrWhiteSpace(SelectedAccount.Username)
+            && !string.IsNullOrWhiteSpace(SelectedAccount.Password) && !SelectedAccount.IsAuthenticated)
         {
             var authSession = await _steamClient.Authentication.BeginAuthSessionViaCredentialsAsync(
                 new AuthSessionDetails
@@ -156,11 +158,12 @@ public class AccountService : IAccountService
             SelectedAccount.SteamId = authSession.SteamID.ConvertToUInt64();
             SelectedAccount.SteamRefreshToken = pollResponse.RefreshToken;
             SelectedAccount.SteamAccessToken = pollResponse.AccessToken;
+            IsConnected = true;
         }
 
         IsConnecting = false;
-        IsConnected = true;
     }
+
     
     public async Task<bool> AcceptMultipleConfirmationsAsync(List<Confirmation> confirmations)
     {
@@ -198,31 +201,62 @@ public class AccountService : IAccountService
         return _steamWeb != null && await _steamWeb.SendConfirmationAjax(conf, Constants.Cancel);
     }
 
-    public async Task FetchConfirmationsAsync()
+    public async Task FetchConfirmationsAsync(int maxRetries = 3, int delayMilliseconds = 1000)
     {
         if (SelectedAccount == null) return;
+
         IsConfirmationsLoading = true;
         NotifyStateChanged();
-        try
-        {
-            _steamWeb = new SteamWeb(SelectedAccount, CookieHelper.GetCookies(SelectedAccount));
-            var urlHelper = new UrlHelper(SelectedAccount);
-            var url = urlHelper.GenerateConfirmationUrl();
-            var response = await _steamWeb.GetConfUrlAsync(url);
 
-            if (response.NeedAuthentication)
-            {
-                Connect();
-                await FetchConfirmationsAsync();
-            }
-            SelectedAccount.Confirmations = response.Confirmations.ToList();
-        }
-        finally
+        int attempt = 0;
+
+        while (attempt < maxRetries)
         {
-            IsConfirmationsLoading = false;
-            NotifyStateChanged();
+            try
+            {
+                attempt++;
+                _steamWeb = new SteamWeb(SelectedAccount, CookieHelper.GetCookies(SelectedAccount));
+                var urlHelper = new UrlHelper(SelectedAccount);
+                var url = urlHelper.GenerateConfirmationUrl();
+                var response = await _steamWeb.GetConfUrlAsync(url);
+
+                if (response.NeedAuthentication )
+                {
+                    Connect();
+                    var waitStartTime = DateTime.Now;
+                    while (!SelectedAccount.IsAuthenticated)
+                    {
+                        if ((DateTime.UtcNow - waitStartTime).TotalMilliseconds >= TimeSpan.FromSeconds(10).TotalMilliseconds)
+                        {
+                            throw new TimeoutException("Waiting for authentication timed out.");
+                        }
+
+                        await Task.Delay(500); // Poll every 500ms
+                    }
+                    continue;
+                }
+
+                SelectedAccount.Confirmations = response.Confirmations.ToList();
+                break; 
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, $"Attempt {attempt} failed to fetch confirmations.");
+
+                if (attempt >= maxRetries)
+                {
+                    Log.Error("Max retry attempts reached. Unable to fetch confirmations.");
+                    throw; // Re-throw the exception if retries are exhausted
+                }
+
+                await Task.Delay(delayMilliseconds); 
+            }
         }
+
+        IsConfirmationsLoading = false;
+        NotifyStateChanged();
     }
+
     
     public async Task SetAccountsList(List<Account> accounts)
     {

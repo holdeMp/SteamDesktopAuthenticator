@@ -4,11 +4,10 @@ namespace SteamWebAuth.Components.Pages;
 
 public partial class Confirmations : ComponentBase, IDisposable
 {
-    protected override Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync()
     {
         AccountService.OnChange += StateHasChanged;
-        Refresh();
-        return Task.CompletedTask;
+        await RefreshAsync();
     }
     
     private static bool TryParsePrice(string price, out decimal actualPrice)
@@ -56,19 +55,19 @@ public partial class Confirmations : ComponentBase, IDisposable
         }
     }
 
-    private async void AcceptAll()
+    private async Task AcceptAll()
     {
         if (AccountService.SelectedAccount == null) return;
         if (AccountService.SelectedAccount.Confirmations.Count == 1)
         {
             var res = await AccountService.AcceptConfirmationAsync(AccountService.SelectedAccount.Confirmations.First());
-            if (res != true) Refresh();
+            if (res != true) await RefreshAsync();
         }
         var result = await AccountService.AcceptMultipleConfirmationsAsync(AccountService.SelectedAccount.Confirmations.ToList());
-        if (result != true) Refresh();
+        if (result != true) await RefreshAsync();
     }
     
-    private async void AcceptSelected()
+    private async Task AcceptSelected()
     {
         AccountService.IsConfirmationsLoading = true;
         StateHasChanged();
@@ -82,18 +81,18 @@ public partial class Confirmations : ComponentBase, IDisposable
         if (selectedConfirmations.Count == 1)
         {
             await AccountService.AcceptConfirmationAsync(selectedConfirmations.First());
-            Refresh();
+            await RefreshAsync();
             AccountService.IsConfirmationsLoading = false;
             StateHasChanged();
             return;
         }
         await AccountService.AcceptMultipleConfirmationsAsync(selectedConfirmations);
-        Refresh();
+        await RefreshAsync();
         StateHasChanged();
         AccountService.IsConfirmationsLoading = false;
     }
 
-    private async void Refresh()
+    private async Task RefreshAsync()
     {
         StateHasChanged();
         await AccountService.FetchConfirmationsAsync();

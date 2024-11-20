@@ -12,6 +12,6 @@ public interface IAccountService
     event Action OnChange;
     public bool IsConfirmationsLoading { get; set; }
     Task<bool> AcceptMultipleConfirmationsAsync(List<Confirmation> confirmations);
-    Task FetchConfirmationsAsync();
+    Task FetchConfirmationsAsync(int maxRetries = 3, int delayMilliseconds = 1000);
     Task<bool> AcceptConfirmationAsync(Confirmation conf);
 }

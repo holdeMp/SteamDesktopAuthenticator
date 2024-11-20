@@ -57,12 +57,12 @@ namespace SteamWebAuthenticator.Services
             httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
                 "Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
             var content = new StringContent(query, Encoding.UTF8, "application/x-www-form-urlencoded");
-            var response = httpClient.PostAsync(url, content).Result;
+            var response = await httpClient.PostAsync(url, content);
         
             response.EnsureSuccessStatusCode();
 
             var responseContent = await response.Content.ReadAsStringAsync();
-
+            
             var confResponse = await responseContent.FromJsonAsync<SendConfirmationResponse>();
             return confResponse.Success;
         }

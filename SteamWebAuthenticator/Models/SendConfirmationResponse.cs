@@ -1,7 +1,8 @@
 using System.Text.Json.Serialization;
+
 // ReSharper disable ClassNeverInstantiated.Global
 
-namespace SteamAuth;
+namespace SteamWebAuthenticator.Models;
 
 public class SendConfirmationResponse
 {

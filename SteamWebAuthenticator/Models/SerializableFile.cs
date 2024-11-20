@@ -36,39 +36,62 @@ public abstract class SerializableFile : IDisposable {
 
 		await serializableFile._fileSemaphore.WaitAsync().ConfigureAwait(false);
 
-		try {
-
+		try
+		{
 			string json = serializableFile.ToJsonText();
 
-			if (string.IsNullOrEmpty(json)) {
-				throw new InvalidOperationException(nameof(json));
+			if (string.IsNullOrEmpty(json))
+			{
+				throw new InvalidOperationException("Serialized JSON content is null or empty.");
 			}
 
-			// We always want to write entire content to temporary file first, in order to never load corrupted data, also when target file doesn't exist
-			var newFilePath = $"{serializableFile.FilePath}.new";
+			// Combine file paths upfront
+			string filePath = Path.Combine(Constants.Accounts, serializableFile.FilePath);
+			string newFilePath = $"{filePath}.new";
 
-			if (File.Exists(serializableFile.FilePath)) {
-				string currentJson = await File.ReadAllTextAsync(serializableFile.FilePath).ConfigureAwait(false);
+			if (File.Exists(filePath))
+			{
+				string currentJson = await File.ReadAllTextAsync(filePath).ConfigureAwait(false);
 
-				if (json == currentJson) {
+				if (json == currentJson)
+				{
 					return;
 				}
-
-				await File.WriteAllTextAsync(newFilePath, json).ConfigureAwait(false);
-
-				File.Replace(newFilePath, Path.Combine(Constants.Accounts, serializableFile.FilePath), null);
-			} 
-			else 
-			{
-				await File.WriteAllTextAsync(newFilePath, json).ConfigureAwait(false);
-
-				File.Move(newFilePath, Path.Combine(Constants.Accounts, serializableFile.FilePath));
 			}
-		} catch (Exception e) {
-			Log.Error(e.Message);
-		} finally {
-			serializableFile._fileSemaphore.Release();
+
+			await File.WriteAllTextAsync(newFilePath, json).ConfigureAwait(false);
+
+			if (File.Exists(filePath))
+			{
+				File.Replace(newFilePath, filePath, null);
+			}
+			else
+			{
+				File.Move(newFilePath, filePath);
+			}
 		}
+		catch (Exception ex)
+		{
+			Log.Error(ex, "Failed to write the file safely.");
+		}
+		finally
+		{
+			serializableFile._fileSemaphore.Release();
+
+			string tempFilePath = $"{Path.Combine(Constants.Accounts, serializableFile.FilePath)}.new";
+			if (File.Exists(tempFilePath))
+			{
+				try
+				{
+					File.Delete(tempFilePath);
+				}
+				catch (Exception cleanupEx)
+				{
+					Log.Warning(cleanupEx, "Failed to clean up temporary file.");
+				}
+			}
+		}
+
 	}
 
 	internal static async Task<bool> Write(string filePath, string json) {

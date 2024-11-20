@@ -26,6 +26,17 @@ public class Account : SerializableFile
     
     public ulong SteamId { get; set; }
 
+    public bool IsAuthenticated
+    {
+        get
+        {
+            var minimumValidUntil = DateTime.UtcNow.AddMinutes(MinimumAccessTokenValidityMinutes);
+            var res = !string.IsNullOrEmpty(SteamAccessToken) &&
+                       AccessTokenValidUntil >= minimumValidUntil;
+            return res;
+        }
+    }
+
     public string DeviceId
     {
         get => _backingDeviceId ?? GenerateDeviceId();
@@ -57,7 +68,6 @@ public class Account : SerializableFile
         get => _backingSessionId ?? string.Empty;
         set => SetProperty(ref _backingSessionId, value);
     }
-    
     
     public DateTime? AccessTokenValidUntil;
     
@@ -93,7 +103,7 @@ public class Account : SerializableFile
     
     public string? SteamRefreshToken { get; set; }
     public string? PreviouslyStoredGuardData { get; set; }
-    public bool ShouldRememberPassword { get; init; }
+    public bool ShouldRememberPassword { get; init; } = true;
 
     public bool IsLoggedIn { get; init; }
     
