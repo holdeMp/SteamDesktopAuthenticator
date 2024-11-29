@@ -22,6 +22,22 @@ public class Account : SerializableFile
     private Cookie? _backingTradeBackSessionCookie;
     private string _backingXcsrfToken = string.Empty;
     private string _backingSteamAccessToken = string.Empty;
+
+    private long _currentSteamChunk;
+    private long _steamTime;
+    private async Task<int> SteamGuardRemainingTime(object sender, EventArgs e)
+    {
+        _steamTime = await TimeAligner.GetSteamTimeAsync();
+
+        _currentSteamChunk = _steamTime / 30L;
+        int secondsUntilChange = (int)(_steamTime - (_currentSteamChunk * 30L));
+
+        SteamGuardCode = await GenerateSteamGuardCodeAsync();
+        return 30 - secondsUntilChange;
+    }
+
+    public string SteamGuardCode { get; set; } = string.Empty;
+
     public string? Password { get; init; }
     
     public ulong SteamId { get; set; }
@@ -133,9 +149,10 @@ public class Account : SerializableFile
         return this;
     }
     
-    public string GenerateSteamGuardCode()
+    public async Task<string> GenerateSteamGuardCodeAsync()
     {
-        return GenerateSteamGuardCodeForTime(TimeAligner.GetSteamTime());
+        var time = await TimeAligner.GetSteamTimeAsync();
+        return GenerateSteamGuardCodeForTime(time);
     }
     
     public string GenerateSteamGuardCodeForTime(long time)

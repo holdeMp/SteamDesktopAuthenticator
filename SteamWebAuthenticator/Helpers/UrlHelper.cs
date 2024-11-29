@@ -9,30 +9,30 @@ namespace SteamWebAuthenticator.Helpers;
 
 public class UrlHelper(Account account)
 {
-    public string GenerateConfirmationUrl(string tag = "conf")
+    public async Task<string> GenerateConfirmationUrlAsync(string tag = "conf")
     {
         string endpoint = APIEndpoints.COMMUNITY_BASE + "/mobileconf/getlist?";
-        string queryString = GenerateConfirmationQueryParams(tag);
+        string queryString = await GenerateConfirmationQueryParamsAsync(tag);
         return endpoint + queryString;
     }
 
-    public string GenerateConfirmationQueryParams(string? tag)
+    public async Task<string> GenerateConfirmationQueryParamsAsync(string? tag)
     {
         if (string.IsNullOrEmpty(account.DeviceId))
             throw new ArgumentException("Device ID is not present");
 
-        var queryParams = GenerateConfirmationQueryParamsAsNvc(tag);
+        var queryParams = await GenerateConfirmationQueryParamsAsNvcAsync(tag);
 
         return string.Join("&", queryParams.AllKeys.Select(key => $"{key}={queryParams[key]}"));
     }
 
 
-    private NameValueCollection GenerateConfirmationQueryParamsAsNvc(string? tag)
+    private async Task<NameValueCollection> GenerateConfirmationQueryParamsAsNvcAsync(string? tag)
     {
         if (string.IsNullOrEmpty(account.DeviceId))
             throw new ArgumentException("Device ID is not present");
 
-        long time = TimeAligner.GetSteamTime();
+        long time = await TimeAligner.GetSteamTimeAsync();
 
         var ret = new NameValueCollection
         {

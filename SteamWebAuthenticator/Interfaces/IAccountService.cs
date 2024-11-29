@@ -1,4 +1,3 @@
-using SteamAuth;
 using SteamWebAuthenticator.Models;
 
 namespace SteamWebAuthenticator.Interfaces;

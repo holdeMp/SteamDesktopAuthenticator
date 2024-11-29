@@ -13,16 +13,16 @@ namespace SteamWebAuthenticator.Models
         private static bool _aligned;
         private static int _timeDifference;
         
-        public static long GetSteamTime()
+        public static async Task<long> GetSteamTimeAsync()
         {
             if (!_aligned)
             {
-                AlignTime();
+                await AlignTimeAsync();
             }
             return GetSystemUnixTime() + _timeDifference;
         }
 
-        private static async void AlignTime()
+        private static async Task AlignTimeAsync()
         {
             var currentTime = GetSystemUnixTime();
             using var client = new HttpClient();

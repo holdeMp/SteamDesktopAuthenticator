@@ -217,7 +217,7 @@ public class AccountService : IAccountService
                 attempt++;
                 _steamWeb = new SteamWeb(SelectedAccount, CookieHelper.GetCookies(SelectedAccount));
                 var urlHelper = new UrlHelper(SelectedAccount);
-                var url = urlHelper.GenerateConfirmationUrl();
+                var url = await urlHelper.GenerateConfirmationUrlAsync();
                 var response = await _steamWeb.GetConfUrlAsync(url);
 
                 if (response.NeedAuthentication )

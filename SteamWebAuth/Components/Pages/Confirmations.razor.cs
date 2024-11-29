@@ -60,11 +60,12 @@ public partial class Confirmations : ComponentBase, IDisposable
         if (AccountService.SelectedAccount == null) return;
         if (AccountService.SelectedAccount.Confirmations.Count == 1)
         {
-            var res = await AccountService.AcceptConfirmationAsync(AccountService.SelectedAccount.Confirmations.First());
-            if (res != true) await RefreshAsync();
+            await AccountService.AcceptConfirmationAsync(AccountService.SelectedAccount.Confirmations.First());
+            await RefreshAsync();
+            return;
         }
-        var result = await AccountService.AcceptMultipleConfirmationsAsync(AccountService.SelectedAccount.Confirmations.ToList());
-        if (result != true) await RefreshAsync();
+        await AccountService.AcceptMultipleConfirmationsAsync(AccountService.SelectedAccount.Confirmations.ToList());
+        await RefreshAsync();
     }
     
     private async Task AcceptSelected()
@@ -74,6 +75,7 @@ public partial class Confirmations : ComponentBase, IDisposable
         if (AccountService.SelectedAccount == null || !AccountService.SelectedAccount.Confirmations
                 .Any(c => c.IsSelected))
         {
+            AccountService.IsConfirmationsLoading = false;
             return;
         }
         var selectedConfirmations = AccountService.SelectedAccount.Confirmations
@@ -104,6 +106,7 @@ public partial class Confirmations : ComponentBase, IDisposable
         AccountService.OnChange -= StateHasChanged;
     }
 
-    [System.Text.RegularExpressions.GeneratedRegex(@"[0-9]+,\d\d₴")]
+    [System.Text.RegularExpressions.GeneratedRegex(@"[0-9]+(?:,\d\d)?₴")]
     private static partial System.Text.RegularExpressions.Regex MyRegex();
+
 }

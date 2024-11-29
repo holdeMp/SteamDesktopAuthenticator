@@ -8,46 +8,46 @@
 @if (string.IsNullOrEmpty(AccountService.SelectedAccountName))
 {
     <div class="markdown-content">
-        @((MarkupString)readMeContent)
+        @((MarkupString)_readMeContent)
     </div>
 }
-<Alert @ref="alert"/>
-<FirstVisitDialog IsVisible="@showFirstVisitDialog"
+<Alert @ref="_alert"/>
+<FirstVisitDialog IsVisible="@_showFirstVisitDialog"
                   OnChange="HandleAlertChange"
                   Title="Welcome to Steam Web Authenticator" 
                   Message="Select an item to get started:" OnClose="HandleDialogClose" />
 <Confirmations />
 @code {
-    private string readMeContent = string.Empty;
-    private bool showFirstVisitDialog;
+    private string _readMeContent = string.Empty;
+    private bool _showFirstVisitDialog;
     [Inject]
     private HttpClient? Http { get; set; }
-    private Alert alert = new();
+    private Alert _alert = new();
 
     protected override async Task OnInitializedAsync()
     {
         AccountService.OnChange += StateHasChanged;
         if (Http != null)
         {
-            readMeContent = await File.ReadAllTextAsync(Path.Combine(HostingEnvironment.WebRootPath, "README.md"));
-            readMeContent = Markdig.Markdown.ToHtml(readMeContent);
+            _readMeContent = await File.ReadAllTextAsync(Path.Combine(HostingEnvironment.WebRootPath, "README.md"));
+            _readMeContent = Markdig.Markdown.ToHtml(_readMeContent);
         }
 
         if (!AccountService.GetAccountsList().Any())
         {
-            showFirstVisitDialog = true;
+            _showFirstVisitDialog = true;
         }
     }
 
     private async Task HandleAlertChange(bool newValue)
     {
         if (!newValue) return;
-        await alert.ShowAsync(Strings.Success,Messages.AllAccountsImported);
+        await _alert.ShowAsync(Strings.Success,Messages.AllAccountsImported);
         StateHasChanged();
     }
     
     private void HandleDialogClose(bool result)
     {
-        showFirstVisitDialog = false;
+        _showFirstVisitDialog = false;
     }
 }

@@ -33,26 +33,23 @@ namespace SteamWebAuthenticator.Services
             string queryString = "?op=" + op + "&";
             // tag is different from op now
             string tag = op == Constants.Allow ? Constants.Accept :Constants.Reject;
-            queryString += urlHelper.GenerateConfirmationQueryParams(tag);
+            queryString += await urlHelper.GenerateConfirmationQueryParamsAsync(tag);
             queryString += "&cid=" + conf.Id + "&ck=" + conf.Key;
             url += queryString;
-
-            string response = await GetRequestAsync(url);
-
-            var confResponse = await response.FromJsonAsync<SendConfirmationResponse>();
-            return confResponse.Success;
+            await GetRequestAsync(url);
+            return true;
         }
 
         public async Task<bool> SendMultiConfirmationAjax(List<Confirmation> confirmations, string op)
         {
             string url = APIEndpoints.COMMUNITY_BASE + "/mobileconf/multiajaxop";
             // tag is different from op now
-            string tag = op ==Constants.Allow ? Constants.Accept :Constants.Reject;
-            string query = "op=" + op + "&" + urlHelper.GenerateConfirmationQueryParams(tag);
+            string tag = op == Constants.Allow ? Constants.Accept : Constants.Reject;
+            string query = "op=" + op + "&" + await urlHelper.GenerateConfirmationQueryParamsAsync(tag);
             query = confirmations
-                .Aggregate(query, (current, conf) => current + ("&cid[]=" + conf.Id + "&ck[]=" + conf.Key));
+                .Aggregate(query, (current, conf) => current + "&cid[]=" + conf.Id + "&ck[]=" + conf.Key);
 
-            httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(SteamWeb.MobileAppUserAgent);
+            httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(MobileAppUserAgent);
             httpClient.DefaultRequestHeaders.AcceptEncoding.ParseAdd("gzip, deflate");
             httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
                 "Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
@@ -60,11 +57,7 @@ namespace SteamWebAuthenticator.Services
             var response = await httpClient.PostAsync(url, content);
         
             response.EnsureSuccessStatusCode();
-
-            var responseContent = await response.Content.ReadAsStringAsync();
-            
-            var confResponse = await responseContent.FromJsonAsync<SendConfirmationResponse>();
-            return confResponse.Success;
+            return true;
         }
         
         public async Task<ConfirmationsResponse> GetConfUrlAsync(string url)
