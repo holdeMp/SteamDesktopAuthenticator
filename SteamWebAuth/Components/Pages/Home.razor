@@ -1,8 +1,8 @@
 ﻿@page "/"
 @using SteamWebAuthenticator
-@using static Microsoft.AspNetCore.Components.Web.RenderMode
-@rendermode InteractiveServer
 @using SteamWebAuthenticator.Interfaces
+@rendermode InteractiveServer
+@using static Microsoft.AspNetCore.Components.Web.RenderMode
 @inject IAccountService AccountService
 @inject IWebHostEnvironment HostingEnvironment
 @if (string.IsNullOrEmpty(AccountService.SelectedAccountName))

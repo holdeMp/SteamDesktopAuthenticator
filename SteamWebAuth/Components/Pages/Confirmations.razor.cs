@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Components;
-
 namespace SteamWebAuth.Components.Pages;
 
 public sealed partial class Confirmations : ComponentBase, IDisposable
