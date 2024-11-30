@@ -1,5 +1,6 @@
 using SteamKit2.Authentication;
 using SteamWebAuthenticator.Models;
+// ReSharper disable SuggestVarOrType_BuiltInTypes
 
 namespace SteamWebAuthenticator.Services;
 
@@ -12,7 +13,8 @@ public class AccountAuthenticator(Account account) : IAuthenticator
         {
             // After 2 tries - tell the user that there seems to be an issue
             if (_deviceCodesGenerated > 2)
-                throw new Exception("There seems to be an issue logging into your account with these two factor codes. Are you sure SDA is still your authenticator?");
+                throw new InvalidOperationException(
+                    "There seems to be an issue logging into your account with these two factor codes. Are you sure SDA is still your authenticator?");
 
             await Task.Delay(30000);
         }

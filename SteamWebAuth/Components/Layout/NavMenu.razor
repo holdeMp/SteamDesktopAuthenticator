@@ -54,8 +54,8 @@
             while (!token.IsCancellationRequested)
             {
                 ProgressPercentage = await CalculateProgressAsync();
-                InvokeAsync(StateHasChanged); // Ensure UI updates occur on the correct thread
-                await Task.Delay(1000, token); // Delay with cancellation support
+                await InvokeAsync(StateHasChanged);
+                await Task.Delay(1000, token);
             }
         }
         catch (TaskCanceledException)
@@ -66,21 +66,39 @@
     
     private async Task<int> CalculateProgressAsync()
     {
-        long steamTime = await TimeAligner.GetSteamTimeAsync();
-        long currentSteamChunk = steamTime / 30L;
-        int secondsUntilChange = (int)(steamTime - (currentSteamChunk * 30L));
+        var steamTime = await TimeAligner.GetSteamTimeAsync();
+        var currentSteamChunk = steamTime / 30L;
+        var secondsUntilChange = (int)(steamTime - (currentSteamChunk * 30L));
         if (AccountService.SelectedAccount != null)
         {
             AccountService.SelectedAccount.SteamGuardCode = await AccountService.SelectedAccount.GenerateSteamGuardCodeAsync();
         }
 
-        return (int)(((30 - secondsUntilChange) / 30.0) * 100);
+        return (int)((30 - secondsUntilChange) / 30.0 * 100);
     }
     
+    private bool _disposed = false; 
+
     public void Dispose()
     {
-        _cts.Cancel();
-        _cts.Dispose();
+        Dispose(true);
+        GC.SuppressFinalize(this); 
+    }
+
+    private void Dispose(bool disposing)
+    {
+        if (_disposed) return;
+        if (disposing)
+        {
+            AccountService.OnChange -= StateHasChanged;
+        }
+
+        _disposed = true;
+    }
+
+    ~NavMenu()
+    {
+        Dispose(false);
     }
     
     protected override Task OnAfterRenderAsync(bool firstRender)

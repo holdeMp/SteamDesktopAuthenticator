@@ -4,7 +4,7 @@ namespace SteamWebAuthenticator.Interfaces;
 
 public interface IAccountService
 {
-    Task SetAccountsList(List<Account> accounts);
+    Task SetAccountsListAsync(List<Account> accounts);
     List<Account> GetAccountsList();
     string? SelectedAccountName { get; set; }
     Account? SelectedAccount { get; }

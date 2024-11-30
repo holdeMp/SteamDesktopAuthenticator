@@ -1,6 +1,9 @@
 ﻿#nullable enable
 using Serilog;
 using SteamWebAuthenticator.Helpers;
+// ReSharper disable UnusedMemberInSuper.Global
+// ReSharper disable UnusedAutoPropertyAccessor.Global
+// ReSharper disable SuggestVarOrType_BuiltInTypes
 
 namespace SteamWebAuthenticator.Models;
 
@@ -12,17 +15,27 @@ public abstract class SerializableFile : IDisposable {
 
 	public string? Username { get; set; }
 	
-	public string? FilePath => $"{Username}{Constants.JsonExtension}";
+	public string FilePath => $"{Username}{Constants.JsonExtension}";
 
+	~SerializableFile()
+	{
+		Dispose(false);
+	}
 	public void Dispose() {
 		Dispose(true);
 		GC.SuppressFinalize(this);
 	}
 
-	private void Dispose(bool disposing) {
+	private bool _disposed; 
+
+	// ReSharper disable once VirtualMemberNeverOverridden.Global
+	protected virtual void Dispose(bool disposing)
+	{
+		if (_disposed) return;
 		if (disposing) {
 			_fileSemaphore.Dispose();
 		}
+		_disposed = true;
 	}
 
 	public abstract Task SaveAsync();
@@ -122,7 +135,8 @@ public abstract class SerializableFile : IDisposable {
 
 			return true;
 		} catch (Exception e) {
-			Log.Error(e.Message + e.StackTrace);
+			var eStackTrace = e.Message + e.StackTrace;
+			Log.Error(eStackTrace);
 			return false;
 		} finally {
 			GlobalFileSemaphore.Release();

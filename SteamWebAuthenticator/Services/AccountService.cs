@@ -5,6 +5,7 @@ using SteamKit2.Internal;
 using SteamWebAuthenticator.Helpers;
 using SteamWebAuthenticator.Interfaces;
 using SteamWebAuthenticator.Models;
+// ReSharper disable MemberCanBePrivate.Global
 
 
 namespace SteamWebAuthenticator.Services;
@@ -81,7 +82,7 @@ public class AccountService : IAccountService
 
     private void InitializeSelectedAccount()
     {
-        SelectedAccountName = _allAccounts.First().Username;
+        SelectedAccountName = _allAccounts[0].Username;
 
         if (SelectedAccount == null)
             return;
@@ -201,7 +202,7 @@ public class AccountService : IAccountService
         return _steamWeb != null && await _steamWeb.SendConfirmationAjax(conf, Constants.Cancel);
     }
 
-    public async Task FetchConfirmationsAsync(int maxRetries = 3, int delayMilliseconds = 1000)
+     public async Task FetchConfirmationsAsync(int maxRetries = 3, int delayMilliseconds = 1000)
     {
         if (SelectedAccount == null) return;
 
@@ -215,41 +216,20 @@ public class AccountService : IAccountService
             try
             {
                 attempt++;
-                _steamWeb = new SteamWeb(SelectedAccount, CookieHelper.GetCookies(SelectedAccount));
-                var urlHelper = new UrlHelper(SelectedAccount);
-                var url = await urlHelper.GenerateConfirmationUrlAsync();
-                var response = await _steamWeb.GetConfUrlAsync(url);
+                await InitializeSteamWeb();
 
-                if (response.NeedAuthentication )
-                {
-                    Connect();
-                    var waitStartTime = DateTime.Now;
-                    while (!SelectedAccount.IsAuthenticated)
-                    {
-                        if ((DateTime.UtcNow - waitStartTime).TotalMilliseconds >= TimeSpan.FromSeconds(10).TotalMilliseconds)
-                        {
-                            throw new TimeoutException("Waiting for authentication timed out.");
-                        }
+                if (await HandleAuthenticationAsync()) continue;
 
-                        await Task.Delay(500); // Poll every 500ms
-                    }
-                    continue;
-                }
-
-                SelectedAccount.Confirmations = response.Confirmations.ToList();
-                break; 
+                await FetchAndSetConfirmationsAsync();
+                break;
             }
             catch (Exception ex)
             {
-                Log.Error(ex, $"Attempt {attempt} failed to fetch confirmations.");
+                HandleFetchException(ex, attempt, maxRetries);
 
-                if (attempt >= maxRetries)
-                {
-                    Log.Error("Max retry attempts reached. Unable to fetch confirmations.");
-                    throw; // Re-throw the exception if retries are exhausted
-                }
+                if (attempt >= maxRetries) throw;
 
-                await Task.Delay(delayMilliseconds); 
+                await Task.Delay(delayMilliseconds);
             }
         }
 
@@ -257,13 +237,70 @@ public class AccountService : IAccountService
         NotifyStateChanged();
     }
 
-    
-    public async Task SetAccountsList(List<Account> accounts)
+    private Task InitializeSteamWeb()
+    {
+        if (SelectedAccount != null)
+            _steamWeb = new SteamWeb(SelectedAccount, CookieHelper.GetCookies(SelectedAccount));
+        return Task.CompletedTask;
+    }
+
+    private async Task<bool> HandleAuthenticationAsync()
+    {
+        var urlHelper = new UrlHelper(SelectedAccount ?? throw new InvalidOperationException());
+        var url = await urlHelper.GenerateConfirmationUrlAsync();
+        if (_steamWeb == null) return false;
+        var response = await _steamWeb.GetConfUrlAsync(url);
+
+        if (!response.NeedAuthentication) return false;
+        Connect();
+        await WaitForAuthenticationAsync();
+        return true;
+
+    }
+
+    private async Task WaitForAuthenticationAsync()
+    {
+        var waitStartTime = DateTime.Now;
+
+        while (SelectedAccount is not { IsAuthenticated: true })
+        {
+            if ((DateTime.UtcNow - waitStartTime).TotalMilliseconds >= TimeSpan.FromSeconds(10).TotalMilliseconds)
+            {
+                throw new TimeoutException("Waiting for authentication timed out.");
+            }
+
+            await Task.Delay(500); // Poll every 500ms
+        }
+    }
+
+    private async Task FetchAndSetConfirmationsAsync()
+    {
+        var urlHelper = new UrlHelper(SelectedAccount ?? throw new InvalidOperationException());
+        var url = await urlHelper.GenerateConfirmationUrlAsync();
+        if (_steamWeb != null)
+        {
+            var response = await _steamWeb.GetConfUrlAsync(url);
+            SelectedAccount.Confirmations = response.Confirmations.ToList();
+        }
+    }
+
+    private static void HandleFetchException(Exception ex, int attempt, int maxRetries)
+    {
+        var messageTemplate = $"Attempt {attempt} failed to fetch confirmations.";
+        Log.Error(ex, messageTemplate);
+
+        if (attempt >= maxRetries)
+        {
+            Log.Error("Max retry attempts reached. Unable to fetch confirmations.");
+        }
+    }
+
+    public async Task SetAccountsListAsync(List<Account> accounts)
     {
         _allAccounts = accounts;
         if (_allAccounts.Count > 0)
         {
-            SelectedAccountName = _allAccounts.First().Username;
+            SelectedAccountName = _allAccounts[0].Username;
             await FetchConfirmationsAsync();
             NotifyStateChanged();
         }

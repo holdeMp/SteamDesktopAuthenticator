@@ -6,13 +6,13 @@ namespace SteamWebAuthenticator.Helpers;
 
 public static class Utilities
 {
-    public static void InBackground<T>(Func<T> function, bool longRunning = false) {
+    public static async Task InBackgroundAsync<T>(Func<T> function, bool longRunning = false) {
         ArgumentNullException.ThrowIfNull(function);
 
-        InBackground(void () => function(), longRunning);
+        await InBackgroundAsync(void () => function(), longRunning);
     }
 
-    private static async void InBackground(Action action, bool longRunning = false) {
+    private static async Task InBackgroundAsync(Action action, bool longRunning = false) {
         ArgumentNullException.ThrowIfNull(action);
 
         var options = TaskCreationOptions.DenyChildAttach;
@@ -30,7 +30,8 @@ public static class Utilities
         try {
             result = new JsonWebToken(token);
         } catch (Exception e) {
-            Log.Error(e.Message + e.StackTrace);
+            var eStackTrace = e.Message + e.StackTrace;
+            Log.Error(eStackTrace);
 
             result = null;
 

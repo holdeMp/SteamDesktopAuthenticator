@@ -20,8 +20,8 @@ else if (AccountService.SelectedAccount != null && AccountService is { IsConfirm
 {
     <h3>Confirmation List</h3>
     <button class="btn btn-primary mb-3" @onclick="SelectAllConfirmations">Select All</button>
-    <button class="btn btn-success mb-3" @onclick="AcceptSelected">Accept Selected</button>
-    <button class="btn btn-success mb-3" @onclick="AcceptAll">Accept All</button>
+    <button class="btn btn-success mb-3" @onclick="AcceptSelectedAsync">Accept Selected</button>
+    <button class="btn btn-success mb-3" @onclick="AcceptAllAsync">Accept All</button>
     <button class="btn btn-warning mb-3" @onclick="RefreshAsync">Refresh</button>
     <p class="card-text">Total Price: <strong>@GetTotalPrice()</strong></p>
     <div class="confirmations-container">

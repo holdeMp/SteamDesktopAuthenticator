@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Serilog;
 using Serilog.Core;
+// ReSharper disable UnusedMember.Global
 
 namespace SteamWebAuthenticator.Helpers;
 
@@ -35,16 +36,8 @@ public static class Serializing
     
     public static async Task<T> FromJsonAsync<T>(this string json)
     {
-        try
-        {
-            using var memoryStream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json));
-            var result = await JsonSerializer.DeserializeAsync<T>(memoryStream);
-            return result!;
-        }
-        catch (Exception e)
-        {
-            Log.Error(e, $"Failed to deserialize: {json}");
-            throw;
-        }
+        using var memoryStream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json));
+        var result = await JsonSerializer.DeserializeAsync<T>(memoryStream);
+        return result!;
     }
 }

@@ -2,7 +2,6 @@ using System.Collections.Specialized;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
-using SteamAuth;
 using SteamWebAuthenticator.Models;
 
 namespace SteamWebAuthenticator.Helpers;
@@ -11,8 +10,8 @@ public class UrlHelper(Account account)
 {
     public async Task<string> GenerateConfirmationUrlAsync(string tag = "conf")
     {
-        string endpoint = APIEndpoints.COMMUNITY_BASE + "/mobileconf/getlist?";
-        string queryString = await GenerateConfirmationQueryParamsAsync(tag);
+        const string endpoint = ApiEndpoints.CommunityBase + "/mobileconf/getlist?";
+        var queryString = await GenerateConfirmationQueryParamsAsync(tag);
         return endpoint + queryString;
     }
 
@@ -32,7 +31,7 @@ public class UrlHelper(Account account)
         if (string.IsNullOrEmpty(account.DeviceId))
             throw new ArgumentException("Device ID is not present");
 
-        long time = await TimeAligner.GetSteamTimeAsync();
+        var time = await TimeAligner.GetSteamTimeAsync();
 
         var ret = new NameValueCollection
         {
@@ -49,8 +48,8 @@ public class UrlHelper(Account account)
     
     private string _generateConfirmationHashForTime(long time, string? tag)
     {
-        byte[] decode = Convert.FromBase64String(account.IdentitySecret);
-        int n2 = 8;
+        var decode = Convert.FromBase64String(account.IdentitySecret);
+        var n2 = 8;
         if (tag != null)
         {
             if (tag.Length > 32)
@@ -63,10 +62,10 @@ public class UrlHelper(Account account)
             }
         }
         var array = new byte[n2];
-        int n3 = 8;
+        var n3 = 8;
         while (true)
         {
-            int n4 = n3 - 1;
+            var n4 = n3 - 1;
             if (n3 <= 0)
             {
                 break;
@@ -81,9 +80,9 @@ public class UrlHelper(Account account)
         }
         var hmacGenerator = new HMACSHA1();
         hmacGenerator.Key = decode;
-        byte[] hashedData = hmacGenerator.ComputeHash(array);
-        string encodedData = Convert.ToBase64String(hashedData, Base64FormattingOptions.None);
-        string hash = WebUtility.UrlEncode(encodedData);
+        var hashedData = hmacGenerator.ComputeHash(array);
+        var encodedData = Convert.ToBase64String(hashedData, Base64FormattingOptions.None);
+        var hash = WebUtility.UrlEncode(encodedData);
         return hash;
     }
 }

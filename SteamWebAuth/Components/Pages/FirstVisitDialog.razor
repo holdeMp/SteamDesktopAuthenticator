@@ -56,10 +56,10 @@
             using var reader = new StreamReader(accountFileStream);
             var accountContent = await reader.ReadToEndAsync();
             var account = await accountContent.FromJsonAsync<Account>();
-            account = account.CreateOrLoad(account.Username + ".json");
+            account = await account.CreateOrLoadAsync(account.Username + ".json");
             accounts.Add(account);
         }
-        await AccountService.SetAccountsList(accounts);
+        await AccountService.SetAccountsListAsync(accounts);
         await OnChange.InvokeAsync(true);
         IsVisible = false;
         StateHasChanged();

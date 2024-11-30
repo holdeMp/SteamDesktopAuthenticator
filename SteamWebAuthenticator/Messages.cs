@@ -1,4 +1,4 @@
-﻿namespace SteamAuth;
+﻿namespace SteamWebAuthenticator;
 
 public static class Messages
 {

@@ -7,6 +7,8 @@ using System.Text.RegularExpressions;
 using Core;
 using Serilog;
 using SteamWebAuthenticator.Helpers;
+// ReSharper disable PropertyCanBeMadeInitOnly.Global
+// ReSharper disable SuggestVarOrType_BuiltInTypes
 
 namespace SteamWebAuthenticator.Models;
 
@@ -22,19 +24,6 @@ public class Account : SerializableFile
     private Cookie? _backingTradeBackSessionCookie;
     private string _backingXcsrfToken = string.Empty;
     private string _backingSteamAccessToken = string.Empty;
-
-    private long _currentSteamChunk;
-    private long _steamTime;
-    private async Task<int> SteamGuardRemainingTime(object sender, EventArgs e)
-    {
-        _steamTime = await TimeAligner.GetSteamTimeAsync();
-
-        _currentSteamChunk = _steamTime / 30L;
-        int secondsUntilChange = (int)(_steamTime - (_currentSteamChunk * 30L));
-
-        SteamGuardCode = await GenerateSteamGuardCodeAsync();
-        return 30 - secondsUntilChange;
-    }
 
     public string SteamGuardCode { get; set; } = string.Empty;
 
@@ -85,7 +74,7 @@ public class Account : SerializableFile
         set => SetProperty(ref _backingSessionId, value);
     }
     
-    public DateTime? AccessTokenValidUntil;
+    public DateTime? AccessTokenValidUntil { get; set; }
     
     public string? SteamAccessToken { 		
         get => _backingSteamAccessToken;
@@ -130,19 +119,19 @@ public class Account : SerializableFile
     
     public override Task SaveAsync()  => SaveAsync(this);
     
-    public Account CreateOrLoad(string filePath) {
+    public async Task<Account> CreateOrLoadAsync(string filePath) {
         ArgumentException.ThrowIfNullOrEmpty(filePath);
         if (!File.Exists(filePath)) {
-            Utilities.InBackground(() => SaveAsync(this));
+            await Utilities.InBackgroundAsync(() => SaveAsync(this));
             return this;
         }
 		
-        var json = File.ReadAllText(filePath);
+        var json = await File.ReadAllTextAsync(filePath);
 
         var account = JsonSerializer.Deserialize<Account>(json);
-        if (account != null)
+        if (account != null && !string.IsNullOrEmpty(json))
         {
-            if (!string.IsNullOrEmpty(json)) return account ?? throw new InvalidOperationException();
+            return account;
         }
 
         Log.Error(Strings.FormatErrorIsEmpty(nameof(json)));
@@ -164,17 +153,17 @@ public class Account : SerializableFile
 
         string sharedSecretUnescaped = Regex.Unescape(SharedSecret);
         byte[] sharedSecretArray = Convert.FromBase64String(sharedSecretUnescaped);
-        byte[] timeArray = new byte[8];
+        var timeArray = new byte[8];
 
         time /= 30L;
 
-        for (int i = 8; i > 0; i--)
+        for (var i = 8; i > 0; i--)
         {
             timeArray[i - 1] = (byte)time;
             time >>= 8;
         }
 
-        HMACSHA1 hmacGenerator = new HMACSHA1();
+        var hmacGenerator = new HMACSHA1();
         hmacGenerator.Key = sharedSecretArray;
         byte[] hashedData = hmacGenerator.ComputeHash(timeArray);
         byte[] codeArray = new byte[5];

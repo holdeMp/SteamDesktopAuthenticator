@@ -2,7 +2,7 @@
 
 namespace SteamWebAuth.Components.Pages;
 
-public partial class Confirmations : ComponentBase, IDisposable
+public sealed partial class Confirmations : ComponentBase, IDisposable
 {
     protected override async Task OnInitializedAsync()
     {
@@ -55,7 +55,7 @@ public partial class Confirmations : ComponentBase, IDisposable
         }
     }
 
-    private async Task AcceptAll()
+    private async Task AcceptAllAsync()
     {
         if (AccountService.SelectedAccount == null) return;
         if (AccountService.SelectedAccount.Confirmations.Count == 1)
@@ -68,7 +68,7 @@ public partial class Confirmations : ComponentBase, IDisposable
         await RefreshAsync();
     }
     
-    private async Task AcceptSelected()
+    private async Task AcceptSelectedAsync()
     {
         AccountService.IsConfirmationsLoading = true;
         StateHasChanged();
@@ -101,9 +101,28 @@ public partial class Confirmations : ComponentBase, IDisposable
         StateHasChanged();
     }
     
+    private bool _disposed = false; 
+
     public void Dispose()
     {
-        AccountService.OnChange -= StateHasChanged;
+        Dispose(true);
+        GC.SuppressFinalize(this); 
+    }
+
+    private void Dispose(bool disposing)
+    {
+        if (_disposed) return;
+        if (disposing)
+        {
+            AccountService.OnChange -= StateHasChanged;
+        }
+
+        _disposed = true;
+    }
+
+    ~Confirmations()
+    {
+        Dispose(false);
     }
 
     [System.Text.RegularExpressions.GeneratedRegex(@"[0-9]+(?:,\d\d)?₴")]

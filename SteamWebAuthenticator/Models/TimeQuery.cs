@@ -1,4 +1,5 @@
 ﻿using System.Text.Json.Serialization;
+// ReSharper disable AutoPropertyCanBeMadeGetOnly.Global
 
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 

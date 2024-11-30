@@ -1,6 +1,6 @@
 ﻿using System.Text;
-using SteamAuth;
 using SteamWebAuthenticator.Helpers;
+// ReSharper disable SuggestVarOrType_SimpleTypes
 
 namespace SteamWebAuthenticator.Models
 {
@@ -28,7 +28,7 @@ namespace SteamWebAuthenticator.Models
             using var client = new HttpClient();
             var jsonString = await "steamid=0".ToJsonAsync();
             var content = new StringContent(jsonString, Encoding.UTF8, "application/json");
-            HttpResponseMessage response = await client.PostAsync(APIEndpoints.TWO_FACTOR_TIME_QUERY, content);
+            HttpResponseMessage response = await client.PostAsync(ApiEndpoints.TwoFactorTimeQuery, content);
             var responseContent = await response.Content.ReadAsStringAsync();
             var query = await responseContent.FromJsonAsync<TimeQuery>();
             _timeDifference = (int)(int.Parse(query.Response.ServerTime) - currentTime);
