@@ -6,13 +6,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\..\Documents\SteamWebAuthenticator\SteamWebAuthenticator.csproj" />
-      <ProjectReference Include="..\SteamWebAuthenticator\SteamWebAuthenticator.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
       <PackageReference Include="Markdig" Version="0.38.0" />
-      <PackageReference Include="SteamKit2" Version="3.0.0-Beta.1" />
+      <PackageReference Include="SteamKit2" Version="3.0.0" />
       <PackageReference Include="SteamWebAuthenticator" Version="1.0.2" />
       <PackageReference Include="Toolbelt.AspNetCore.CssLiveReloader" Version="1.1.4" />
     </ItemGroup>
